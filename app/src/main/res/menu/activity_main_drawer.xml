@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_import_raw_data"
+            android:icon="@drawable/ic_raw_data"
+            android:title="Import Raw Data" />
+        <item
+            android:id="@+id/nav_import_teacher_data"
+            android:icon="@drawable/ic_teacher_data"
+            android:title="Import Teacher Data" />
+        <item
+            android:id="@+id/nav_import_facilities_data"
+            android:icon="@drawable/ic_facilities_data"
+            android:title="Import Facilities Data" />
+        <item
+            android:id="@+id/nav_manage"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="Tools" />
+    </group>
+
+    <item android:title="Communicate">
+        <menu>
+            <item
+                android:id="@+id/nav_share"
+                android:icon="@drawable/ic_menu_share"
+                android:title="Share" />
+            <item
+                android:id="@+id/nav_send"
+                android:icon="@drawable/ic_menu_send"
+                android:title="Send" />
+        </menu>
+    </item>
+
+</menu>

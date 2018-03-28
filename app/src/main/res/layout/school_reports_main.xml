@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="in.hulum.udise.MainActivity">
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/textlabel_school_reports"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="32dp"
+            android:text="SCHOOL REPORTS"
+            android:textAlignment="center"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <Button
+            android:id="@+id/button_number_of_schools"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="32dp"
+            android:text="Number of Schools"
+            android:onClick="schoolReportsClickHandler"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textlabel_school_reports" />
+
+        <Button
+            android:id="@+id/button_list_of_schools"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="List of Schools"
+            android:onClick="schoolReportsClickHandler"
+            app:layout_constraintEnd_toEndOf="@id/button_number_of_schools"
+            app:layout_constraintStart_toStartOf="@id/button_number_of_schools"
+            app:layout_constraintTop_toBottomOf="@id/button_number_of_schools" />
+
+        <Button
+            android:id="@+id/button_rented_owned_schools"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Rented and Owned Schools"
+            android:onClick="schoolReportsClickHandler"
+            app:layout_constraintEnd_toEndOf="@id/button_number_of_schools"
+            app:layout_constraintStart_toStartOf="@id/button_number_of_schools"
+            app:layout_constraintTop_toBottomOf="@id/button_list_of_schools" />
+
+        <Button
+            android:id="@+id/button_school_contact"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="School Contact Info"
+            android:onClick="schoolReportsClickHandler"
+            app:layout_constraintEnd_toEndOf="@id/button_number_of_schools"
+            app:layout_constraintStart_toStartOf="@id/button_number_of_schools"
+            app:layout_constraintTop_toBottomOf="@id/button_rented_owned_schools" />
+
+        <Button
+            android:id="@+id/button_find_school"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Find School"
+            android:onClick="schoolReportsClickHandler"
+            app:layout_constraintTop_toBottomOf="@id/button_school_contact"
+            app:layout_constraintStart_toStartOf="@id/button_number_of_schools"
+            app:layout_constraintEnd_toEndOf="@id/button_number_of_schools"/>
+
+        <Button
+            android:id="@+id/button_comparative_number_of_schools"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="16dp"
+            android:text="Comparative Number of Schools"
+            android:onClick="schoolReportsClickHandler"
+            app:layout_constraintTop_toBottomOf="@id/button_find_school"
+            app:layout_constraintStart_toStartOf="@id/button_number_of_schools"
+            app:layout_constraintEnd_toEndOf="@id/button_number_of_schools"/>
+
+    </android.support.constraint.ConstraintLayout>
+
+</android.support.v4.widget.NestedScrollView>

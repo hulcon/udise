@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="in.hulum.udise.MainActivity">
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/textlabel_enrolment_reports"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="32dp"
+            android:text="ENROLMENT REPORTS"
+            android:textAlignment="center"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <Button
+            android:id="@+id/button_enrolment_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="32dp"
+            android:text="Enrolment Summary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textlabel_enrolment_reports" />
+
+        <Button
+            android:id="@+id/button_schoolwise_enrolment_list"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="School-wise Enrolment List"
+            app:layout_constraintEnd_toEndOf="@id/button_enrolment_summary"
+            app:layout_constraintStart_toStartOf="@id/button_enrolment_summary"
+            app:layout_constraintTop_toBottomOf="@id/button_enrolment_summary" />
+
+        <Button
+            android:id="@+id/button_constituencywise_enrolment"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Constituency-wise Enrolment"
+            app:layout_constraintEnd_toEndOf="@id/button_enrolment_summary"
+            app:layout_constraintStart_toStartOf="@id/button_enrolment_summary"
+            app:layout_constraintTop_toBottomOf="@id/button_schoolwise_enrolment_list" />
+
+        <Button
+            android:id="@+id/button_compare_enrolment"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Compare Enrolment"
+            app:layout_constraintEnd_toEndOf="@id/button_enrolment_summary"
+            app:layout_constraintStart_toStartOf="@id/button_enrolment_summary"
+            app:layout_constraintTop_toBottomOf="@id/button_constituencywise_enrolment" />
+
+        <Button
+            android:id="@+id/button_enrolment_based_school_list"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Enrolment Based School List"
+            app:layout_constraintStart_toStartOf="@id/button_enrolment_summary"
+            app:layout_constraintEnd_toEndOf="@id/button_enrolment_summary"
+            app:layout_constraintTop_toBottomOf="@id/button_compare_enrolment"/>
+
+
+    </android.support.constraint.ConstraintLayout>
+
+</android.support.v4.widget.NestedScrollView>
