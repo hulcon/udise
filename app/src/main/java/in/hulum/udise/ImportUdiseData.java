@@ -469,12 +469,20 @@ public class ImportUdiseData {
                 row = firstSheet.getRow(rowIndex);
 
                 /*
+                 * Check if the first cell of the row is blank
+                 * If it is blank skip this row, otherwise read
+                 * data from the row
+                 */
+                cell = row.getCell(0);
+                cellString = dataFormatter.formatCellValue(cell);
+                if(cellString.isEmpty()){
+                    continue;
+                }
+
+
+                /*
                  * Loop through all cells of a row and store it in a string array list
                  */
-
-                //TODO: Currently it also stores blank rows in the database
-                //which gives rise to false greater number of states, zones, academic years etc.
-                //Need to check this area urgently
                 for(int colIndex=0;colIndex<excelHeaders.length;colIndex++){
                     cell = row.getCell(colIndex);
                     cellString = dataFormatter.formatCellValue(cell);
@@ -501,7 +509,7 @@ public class ImportUdiseData {
                  * Send progress update broadcast
                  */
                 percentageCompleted = (rowIndex*100/lastRowNum);
-                String progressMessage = "Importing School " + rowIndex + " out of " + lastRowNum + " [ " + percentageCompleted+ " % complete ]";
+                String progressMessage = "Importing Row " + rowIndex + " out of " + lastRowNum + " [ " + percentageCompleted+ " % complete ]";
                 sendProgressBroadcast(context,ACTION_IMPORT_RAW_DATA,false,false,true,false,progressMessage,percentageCompleted,userType);
                 notificationBuilder = notificationHelper.getNotificationWithProgress(notificationTitle,progressMessage,percentageCompleted);
                 notificationHelper.getManager().notify(NOTIFICATION_ID,notificationBuilder.build());
@@ -544,6 +552,17 @@ public class ImportUdiseData {
 
             notificationBuilder = notificationHelper.getFinalNotificationWithAlerts(notificationTitle,"Excel file imported successfully!",pendingIntent);
             notificationHelper.getManager().notify(NOTIFICATION_ID,notificationBuilder.build());
+
+
+            /*
+             * Update shared preferences to indicate that import process has been
+             * completed successfully
+             */
+            percentageCompleted = 100;
+            SharedPreferences.Editor preferenceEditor = mPreferences.edit();
+            preferenceEditor.putBoolean(SHARED_PREFERENCES_KEY_IS_IMPORTING,true);
+            preferenceEditor.putInt(SHARED_PREFERENCES_KEY_PROGRESS,percentageCompleted);
+            preferenceEditor.apply();
 
             /*String[] projection = {UdiseContract.RawData.COLUMN_UDISE_SCHOOL_CODE};
             Cursor returnedCursor = context.getContentResolver().query(UdiseContract.RawData.CONTENT_URI,projection,null,null,null);

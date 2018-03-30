@@ -101,7 +101,7 @@ public class ImportDialogFragment extends DialogFragment {
                 getDialog().dismiss();
             }
         }
-
+        Log.d(TAG,"IsImporting flag is " + isImporting + " and progresspercentage is " + progressPercentage);
     }
 
     @Override
