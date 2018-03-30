@@ -1,9 +1,11 @@
 package in.hulum.udise;
 
 import android.app.NotificationChannel;
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
@@ -60,6 +62,11 @@ public class ImportUdiseData {
 
     private static NotificationHelper notificationHelper;
     private static int NOTIFICATION_ID = 17;
+
+    private static final String SHARED_PREFERENCES_KEY_IS_IMPORTING = "in.hulum.udise.sharedpreferences.keys.isimporting";
+    private static final String SHARED_PREFERENCES_KEY_PROGRESS = "in.hulum.udise.sharedpreferences.keys.progress";
+
+
 
     /**
      * This method acts as an entry point into this class. It acts as a bridge
@@ -212,6 +219,27 @@ public class ImportUdiseData {
 
         String notificationTitle = "Import Excel File";
 
+        /*
+         * Declare and initialise shared preferences
+         * Shared preferences are used for storing the state
+         * of the import progress. This is required to decide
+         * if the dialogfragment needs to be dismissed when the
+         * app comes to foreground after being interrupted by
+         * the user or the operating system. If the import process
+         * was completed while the UI was not visible, once the
+         * UI becomes visible the dialogfragment will still be
+         * frozen at an incorrect progress position. In order to
+         * overcome this, we will keep updating the progress in a
+         * shared preference variable even if the UI is not visible.
+         * Once the UI becomes visible, we will check the shared preference
+         * variable and check if the import has been completed already.
+         * If the import has been completed, we will dismiss the dialogfragment.
+         */
+
+        SharedPreferences mPreferences;
+        String sharedPrefFile = "in.hulum.udise.sharedprefs";
+        mPreferences = context.getSharedPreferences(sharedPrefFile,Context.MODE_PRIVATE);
+
         sendProgressBroadcast(context,ACTION_IMPORT_RAW_DATA,false,false,false,false,"Loading file, Please Wait...",0,UserDataModel.USER_TYPE_UNKNOWN);
         NotificationCompat.Builder notificationBuilder = notificationHelper.getNotificationWithoutAlerts(notificationTitle,"Loading File, Please Wait...");
         notificationHelper.getManager().notify(NOTIFICATION_ID,notificationBuilder.build());
@@ -327,24 +355,34 @@ public class ImportUdiseData {
                 //the if-else structure
                 //Typically there should be column index constants for
                 //all columns
+                //Also currently this logic currently also adds all the blank
+                //rows if present in the excel file. Need to check it!
 
                 for(int colIndex=firstColNum;colIndex<11;colIndex++){
                     cell = row.getCell(colIndex);
                     cellString = dataFormatter.formatCellValue(cell);
-                    if(colIndex==0){
-                        acYearsSet.add(cellString);
-                    }
-                    else if(colIndex==1){
-                        stateNamesSet.add(cellString);
-                    }
-                    else if(colIndex==3){
-                        districtNamesSet.add(cellString);
-                    }
-                    else if(colIndex==5){
-                        zoneNamesSet.add(cellString);
-                    }
-                    else if(colIndex==10){
-                        schoolCodesSet.add(cellString);
+                    cellString = cellString.trim();
+                    /*
+                     * Add this value to the list if and only if it
+                     * is not empty
+                     */
+                    if(cellString.length()!=0){
+                        if(colIndex==0){
+                            acYearsSet.add(cellString);
+                            Log.d(TAG,"Academic year [" + cellString + "] with length " + cellString.length() + " added to the list");
+                        }
+                        else if(colIndex==1){
+                            stateNamesSet.add(cellString);
+                        }
+                        else if(colIndex==3){
+                            districtNamesSet.add(cellString);
+                        }
+                        else if(colIndex==5){
+                            zoneNamesSet.add(cellString);
+                        }
+                        else if(colIndex==10){
+                            schoolCodesSet.add(cellString);
+                        }
                     }
                 }
                 percentageCompleted = (rowIndex*100/lastRowNum);
@@ -433,6 +471,10 @@ public class ImportUdiseData {
                 /*
                  * Loop through all cells of a row and store it in a string array list
                  */
+
+                //TODO: Currently it also stores blank rows in the database
+                //which gives rise to false greater number of states, zones, academic years etc.
+                //Need to check this area urgently
                 for(int colIndex=0;colIndex<excelHeaders.length;colIndex++){
                     cell = row.getCell(colIndex);
                     cellString = dataFormatter.formatCellValue(cell);
@@ -463,6 +505,11 @@ public class ImportUdiseData {
                 sendProgressBroadcast(context,ACTION_IMPORT_RAW_DATA,false,false,true,false,progressMessage,percentageCompleted,userType);
                 notificationBuilder = notificationHelper.getNotificationWithProgress(notificationTitle,progressMessage,percentageCompleted);
                 notificationHelper.getManager().notify(NOTIFICATION_ID,notificationBuilder.build());
+
+                SharedPreferences.Editor preferenceEditor = mPreferences.edit();
+                preferenceEditor.putBoolean(SHARED_PREFERENCES_KEY_IS_IMPORTING,true);
+                preferenceEditor.putInt(SHARED_PREFERENCES_KEY_PROGRESS,percentageCompleted);
+                preferenceEditor.apply();
             }
 
 
@@ -481,7 +528,21 @@ public class ImportUdiseData {
             broadcastIntent.setAction(ACTION_IMPORT_RAW_DATA);
             broadcastIntent.putExtra(PARAM_IMPORT_ENDED_SUCCESSFULLY,true);
             LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
-            notificationBuilder = notificationHelper.getNotificationWithAlerts(notificationTitle,"Excel file imported successfully!");
+
+            /*
+             * Send the final notification to indicate the end of import process
+             * Also, create a pending intent so that if the user clicks the
+             * notification, the mainactivity of the app is opened
+             *
+             * Before showing any new notification, cancel all the previous notifications
+             */
+            notificationHelper.getManager().cancelAll();
+
+            Intent pIntent = new Intent( context,MainActivity.class);
+            pIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            PendingIntent pendingIntent = PendingIntent.getActivity(context,0,pIntent,PendingIntent.FLAG_CANCEL_CURRENT);
+
+            notificationBuilder = notificationHelper.getFinalNotificationWithAlerts(notificationTitle,"Excel file imported successfully!",pendingIntent);
             notificationHelper.getManager().notify(NOTIFICATION_ID,notificationBuilder.build());
 
             /*String[] projection = {UdiseContract.RawData.COLUMN_UDISE_SCHOOL_CODE};

@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
@@ -37,9 +38,16 @@ public class ImportDialogFragment extends DialogFragment {
 
     private ResponseReceiver responseReceiver = new ResponseReceiver();
 
+    private SharedPreferences mPreferences;
+    private String sharedPrefFile = "in.hulum.udise.sharedprefs";
+
     static final int REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT = 7;
 
     private static final String TAG = "ImportDialogFragment";
+    private static final String SHARED_PREFERENCES_KEY_IS_IMPORTING = "in.hulum.udise.sharedpreferences.keys.isimporting";
+    private static final String SHARED_PREFERENCES_KEY_PROGRESS = "in.hulum.udise.sharedpreferences.keys.progress";
+    private boolean isImporting;
+    private int progressPercentage;
 
 
     public ImportDialogFragment() {
@@ -84,6 +92,16 @@ public class ImportDialogFragment extends DialogFragment {
         myFilter.addAction(ImportUdiseData.ACTION_IMPORT_RAW_DATA);
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(responseReceiver,myFilter);
         Log.d(TAG,"Receiver registered!!!!");
+        mPreferences = getContext().getSharedPreferences(sharedPrefFile,Context.MODE_PRIVATE);
+        isImporting = mPreferences.getBoolean(SHARED_PREFERENCES_KEY_IS_IMPORTING,false);
+        progressPercentage = mPreferences.getInt(SHARED_PREFERENCES_KEY_PROGRESS,0);
+        if(isImporting){
+            if(progressPercentage==100){
+                mImportDialogProgressBar.setProgress(100);
+                getDialog().dismiss();
+            }
+        }
+
     }
 
     @Override
@@ -111,6 +129,14 @@ public class ImportDialogFragment extends DialogFragment {
 
 
     public class ResponseReceiver extends BroadcastReceiver {
+        /*
+         * TODO:
+         * The dialogfragment should dismiss when the import process is over
+         * It does the required behaviour if the app is in foreground. But if the app is in background
+         * it does not dismiss the dialogfragment
+         *
+         * It needs to be done!!!!
+         */
 
         @Override
         public void onReceive(Context context, Intent intent) {

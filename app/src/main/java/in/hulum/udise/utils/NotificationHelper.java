@@ -3,6 +3,7 @@ package in.hulum.udise.utils;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.os.Build;
@@ -45,11 +46,11 @@ public class NotificationHelper extends ContextWrapper {
 
             int importanceDefault = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel progressChannel = new NotificationChannel(UDISE_PROGRESS_CHANNEL_ID,UDISE_PROGRESS_CHANNEL_NAME,importanceDefault);
-            alertChannel.setDescription("UDISE Notification Channel for progress update notifications.");
-            alertChannel.enableLights(false);
-            alertChannel.enableVibration(false);
-            alertChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-            alertChannel.setShowBadge(false);
+            progressChannel.setDescription("UDISE Notification Channel for progress update notifications.");
+            progressChannel.enableLights(false);
+            progressChannel.enableVibration(false);
+            progressChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            progressChannel.setShowBadge(false);
             getManager().createNotificationChannel(progressChannel);
         }
     }
@@ -70,6 +71,21 @@ public class NotificationHelper extends ContextWrapper {
                 .setStyle(new NotificationCompat.BigTextStyle()
                               .bigText(body))
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setAutoCancel(true);
+    }
+
+    public NotificationCompat.Builder getFinalNotificationWithAlerts(String title, String body, PendingIntent pendingIntent){
+        return new NotificationCompat.Builder(getApplicationContext(),UDISE_WITH_ALERTS_CHANNEL_ID)
+                .setContentTitle(title)
+                .setSmallIcon(R.drawable.ic_import_notification)
+                .setContentText(body)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(body))
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
     }
 
@@ -82,6 +98,7 @@ public class NotificationHelper extends ContextWrapper {
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(body))
                 .setProgress(0,0,false) //Hide the progress indicator
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setAutoCancel(true);
     }
 
@@ -94,6 +111,7 @@ public class NotificationHelper extends ContextWrapper {
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(body))
                 .setProgress(100,progress,false) //Hide the progress indicator
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setAutoCancel(true);
     }
 }
