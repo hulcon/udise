@@ -19,8 +19,6 @@ import android.widget.Toast;
 
 import in.hulum.udise.ImportJobIntentService;
 import in.hulum.udise.ImportUdiseData;
-import in.hulum.udise.MainActivity;
-import in.hulum.udise.NumberOfSchools;
 import in.hulum.udise.R;
 
 import static android.app.Activity.RESULT_OK;
@@ -58,7 +56,7 @@ public class ImportDialogFragment extends DialogFragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view =  inflater.inflate(R.layout.dialog_fragment_import2,container,false);
+        View view =  inflater.inflate(R.layout.dialog_fragment_import,container,false);
 
         mMessageDisplay = view.findViewById(R.id.textview_import_dialog_message);
         mImportDialogProgressBar = view.findViewById(R.id.progressBar_dialog_import);
