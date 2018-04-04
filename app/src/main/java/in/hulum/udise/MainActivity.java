@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
-import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -18,7 +17,6 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -29,17 +27,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import in.hulum.udise.database.UdiseDbHelper;
 import in.hulum.udise.fragments.EnrolmentReportsFragment;
 import in.hulum.udise.fragments.ImportDialogFragment;
 import in.hulum.udise.fragments.SchoolReportsFragment;
-import in.hulum.udise.fragments.TeacherReportsMain;
+import in.hulum.udise.fragments.TeacherReportsFragment;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -227,9 +223,13 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_import_raw_data) {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+           /* Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.setType("application/vnd.ms-excel");
-            startActivityForResult(intent, REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT);
+            startActivityForResult(intent, REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT);*/
+            Log.d(TAG,"Import item in drawer clicked");
+            ImportDialogFragment importDialogFragment = new ImportDialogFragment();
+            importDialogFragment.setCancelable(false);
+            importDialogFragment.show(getSupportFragmentManager(),"Import Excel File");
 
         } else if (id == R.id.nav_import_teacher_data) {
 
@@ -252,7 +252,7 @@ public class MainActivity extends AppCompatActivity
         Adapter adapter = new Adapter(getSupportFragmentManager());
         adapter.addFragment(new SchoolReportsFragment(),"School");
         adapter.addFragment(new EnrolmentReportsFragment(),"Enrolment");
-        adapter.addFragment(new TeacherReportsMain(),"Teacher");
+        adapter.addFragment(new TeacherReportsFragment(),"Teacher");
         viewPager.setAdapter(adapter);
 
     }

@@ -422,7 +422,7 @@ public class UdiseDbHelper extends SQLiteOpenHelper {
 
     /**
      * This method takes district code, district name, academic year and returns a list of type NumberOfSchoolsModel
-     * The first item in the list contains the summary of the district and each subsequent item in the list
+     * The first item in the list contains the summary of the <b> district </b> and each subsequent item in the list
      * contains details of the respective zones.
      * Each item in the list contains number of primary, middle, high and higher secondary schools for each management type
      *
@@ -663,8 +663,10 @@ public class UdiseDbHelper extends SQLiteOpenHelper {
                 UdiseContract.RawData.COLUMN_ZONE_NAME
         };
 
+
+
         //String selectionString = UdiseContract.RawData.COLUMN_DISTRICT_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
-        String sortOrder = UdiseContract.RawData.COLUMN_AC_YEAR;
+        String sortOrder = UdiseContract.RawData.COLUMN_AC_YEAR + " DESC";
         //String[] selectionArguments = {districtCode, academicYear};
         Cursor cursor = context.getContentResolver().query(UdiseContract.RawData.CONTENT_URI,projection,null,null,sortOrder);
 

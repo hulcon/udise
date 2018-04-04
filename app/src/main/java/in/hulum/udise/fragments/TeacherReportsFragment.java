@@ -13,7 +13,7 @@ import in.hulum.udise.R;
  * Created by Irshad on 18-03-2018.
  */
 
-public class TeacherReportsMain extends Fragment {
+public class TeacherReportsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {

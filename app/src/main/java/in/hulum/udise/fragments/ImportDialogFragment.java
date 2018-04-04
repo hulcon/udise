@@ -97,6 +97,16 @@ public class ImportDialogFragment extends DialogFragment {
             if(progressPercentage==100){
                 mImportDialogProgressBar.setProgress(100);
                 getDialog().dismiss();
+
+                /*
+                 * After dismissing the dialog, reset the preferences
+                 * flag so that dialog appears the next time
+                 */
+                int percentageCompleted = 0;
+                SharedPreferences.Editor preferenceEditor = mPreferences.edit();
+                preferenceEditor.putBoolean(SHARED_PREFERENCES_KEY_IS_IMPORTING,false);
+                preferenceEditor.putInt(SHARED_PREFERENCES_KEY_PROGRESS,percentageCompleted);
+                preferenceEditor.apply();
             }
         }
         Log.d(TAG,"IsImporting flag is " + isImporting + " and progresspercentage is " + progressPercentage);

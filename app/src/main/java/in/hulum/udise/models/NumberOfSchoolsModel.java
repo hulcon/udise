@@ -19,10 +19,11 @@ public class NumberOfSchoolsModel {
    * while the rest of the cards will provide details of subclasses
    * like zones etc.
    */
-    public static final int MODEL_TYPE_STATE = 100;
-    public static final int MODEL_TYPE_DISTRICT = 200;
-    public static final int MODEL_TYPE_ZONE = 300;
-    public static final int MODEL_TYPE_CLUSTER = 400;
+    public static final int MODEL_TYPE_NATIONAL = 100;
+    public static final int MODEL_TYPE_STATE = 200;
+    public static final int MODEL_TYPE_DISTRICT = 300;
+    public static final int MODEL_TYPE_ZONE = 400;
+    public static final int MODEL_TYPE_CLUSTER = 500;
 
     public static final int PRIMARY_SCHOOL = 1000;
     public static final int MIDDLE_SCHOOL = 2000;
@@ -226,13 +227,13 @@ public class NumberOfSchoolsModel {
             this.higherSecondarySchools = this.higherSecondarySchools + 1;
         }
 
-        public void clearAllDAta(){
+        /*public void clearAllDAta(){
             this.managementName = "";
             this.primarySchools = 0;
             this.middleSchools = 0;
             this.highSchools = 0;
             this.higherSecondarySchools = 0;
-        }
+        }*/
     }
 
     /*
