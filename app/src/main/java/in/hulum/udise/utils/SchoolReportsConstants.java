@@ -37,8 +37,9 @@ public class SchoolReportsConstants {
     public static final int REPORT_DISPLAY_CLUSTER_SUMMARY = 250;
     public static final int REPORT_DISPLAY_INVALID = -1;
 
-    public static final String EXTRA_PARAM_KEY_REPORT_DISPLAY_SUMMARY = "in.hulum.udise.extra.REPORT_DISPLAY_SUMMARY";
+    public static final String EXTRA_PARAM_KEY_REPORT_DISPLAY_SUMMARY_TYPE = "in.hulum.udise.extra.REPORT_DISPLAY_SUMMARY";
 
     public static final String EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER = "in.hulum.udise.extra.DISTRICT_ZONE_CLUSTER_CODE";
     public static final String EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER = "in.hulum.udise.extra.STATE_DISTRICT_ZONE_CLUSTER_NAME";
+    public static final String EXTRA_KEY_ACADEMIC_YEAR = "in.hulum.udise.extra.ACADEMIC_YEAR";
 }

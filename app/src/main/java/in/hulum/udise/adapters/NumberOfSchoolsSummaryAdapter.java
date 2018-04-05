@@ -44,7 +44,7 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
      * The interface that receives onClick messages
      */
     public interface NumberOfSchoolsSummaryAdapterOnClickHandler {
-        void onClick(int reportDisplayLevel,String zoneDistrictOrStateCode);
+        void onClick(int reportDisplayLevel, String zoneDistrictOrStateCode, String zoneDistrictOrStateName);
     }
 
     private List<NumberOfSchoolsModel> numberOfSchoolsModelList;
@@ -161,6 +161,10 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
         notifyDataSetChanged();
     }
 
+    /*
+     * Inner class for recyclerview view holder
+     */
+
     class NumberOfSchoolsViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         final TextView summaryCardViewTitle;
         final TextView numberOfPrimarySchools;
@@ -186,6 +190,7 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
             int adapterPosition = getAdapterPosition();
             int model = mSchoolSummaryList.get(adapterPosition).getModelType();
             String code = null;
+            String name = null;
             int reportDisplayLevel;
             switch (model){
                 case SchoolReportsConstants.MODEL_TYPE_NATIONAL:
@@ -194,15 +199,17 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
                     break;
                 case SchoolReportsConstants.MODEL_TYPE_STATE:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_LEVEL_DISTRICTWISE;
-                    code = mSchoolSummaryList.get(adapterPosition).getStateName();
+                    name = mSchoolSummaryList.get(adapterPosition).getStateName();
                     break;
                 case SchoolReportsConstants.MODEL_TYPE_DISTRICT:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_LEVEL_ZONEWISE;
                     code = mSchoolSummaryList.get(adapterPosition).getDistrictCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getDistrictName();
                     break;
                 case SchoolReportsConstants.MODEL_TYPE_ZONE:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_LEVEL_CLUSTERWISE;
                     code = mSchoolSummaryList.get(adapterPosition).getZoneCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getZoneName();
                     break;
                 case SchoolReportsConstants.MODEL_TYPE_CLUSTER:
                     /*
@@ -210,12 +217,14 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
                      * We will take no action on any clicks for this case
                      */
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_LEVEL_TAKE_NO_ACTION;
+                    code = mSchoolSummaryList.get(adapterPosition).getClusterCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getClusterName();
                     break;
                 default:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_INVALID;
 
             }
-            mClickHandler.onClick(reportDisplayLevel,code);
+            mClickHandler.onClick(reportDisplayLevel,code,name);
         }
     }
 }
