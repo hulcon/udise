@@ -427,24 +427,47 @@ public class NumberOfSchools extends AppCompatActivity implements
 
     @Override
     public void onClick(int reportDisplayLevel, String zoneDistrictOrStateCode, String zoneDistrictOrStateName) {
+        Intent intent;
+        Log.d(TAG,"Report Request received with level " + reportDisplayLevel);
         switch(reportDisplayLevel){
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_STATEWISE:
+                /*
+                 * Use REPORT_DISPLAY_LEVEL_WISE_TYPE for passing the type of report
+                 */
+                intent = new Intent(this,NumberOfSchoolsLevelWise.class);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                //intent.putExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateCode);
+                //intent.putExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateName);
+                intent.putExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_LEVEL_WISE_TYPE,SchoolReportsConstants.REPORT_DISPLAY_LEVEL_STATEWISE);
+                startActivity(intent);
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_DISTRICTWISE:
+                intent = new Intent(this,NumberOfSchoolsLevelWise.class);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateCode);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateName);
+                intent.putExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_LEVEL_WISE_TYPE,SchoolReportsConstants.REPORT_DISPLAY_LEVEL_DISTRICTWISE);
+                startActivity(intent);
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_ZONEWISE:
-                Intent intent = new Intent(this,NumberOfSchools.class);
+                intent = new Intent(this,NumberOfSchoolsLevelWise.class);
                 intent.putExtra(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
-                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,"010304");
-                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,"Srinagar");
-                intent.putExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_SUMMARY_TYPE,SchoolReportsConstants.REPORT_DISPLAY_ZONE_SUMMARY);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateCode);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateName);
+                intent.putExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_LEVEL_WISE_TYPE,SchoolReportsConstants.REPORT_DISPLAY_LEVEL_ZONEWISE);
                 startActivity(intent);
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_CLUSTERWISE:
+                intent = new Intent(this,NumberOfSchoolsLevelWise.class);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateCode);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateName);
+                intent.putExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_LEVEL_WISE_TYPE,SchoolReportsConstants.REPORT_DISPLAY_LEVEL_CLUSTERWISE);
+                startActivity(intent);
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_TAKE_NO_ACTION:

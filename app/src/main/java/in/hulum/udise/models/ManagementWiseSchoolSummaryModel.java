@@ -6,13 +6,15 @@ package in.hulum.udise.models;
 
 public class ManagementWiseSchoolSummaryModel {
 
-    private String stateName;
+ /*   private String stateName;
     private String districtCode;
     private String districtName;
     private String zoneCode;
     private String zoneName;
     private String clusterCode;
-    private String clusterName;
+    private String clusterName;*/
+    private String code;
+    private String name;
 
     private int modelType;
     private String managementNameOrSummaryHeading;
@@ -30,7 +32,23 @@ public class ManagementWiseSchoolSummaryModel {
         this.flagIsSummaryOrManagementDetail = flagIsSummaryOrManagementDetail;
     }
 
-    public String getStateName() {
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /*  public String getStateName() {
         return stateName;
     }
 
@@ -84,7 +102,7 @@ public class ManagementWiseSchoolSummaryModel {
 
     public void setClusterName(String clusterName) {
         this.clusterName = clusterName;
-    }
+    }*/
 
     public int getModelType() {
         return modelType;

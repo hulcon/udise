@@ -31,6 +31,8 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
     private final Context mContext;
     private List<ManagementWiseSchoolSummaryModel> mSchoolSummaryList;
 
+    private static final String TAG = "NumberOfSchoolsAdapter";
+
 
     /*
      * Below, i've defined an interface to handle clicks on items within this adapter.
@@ -199,17 +201,18 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
                     break;
                 case SchoolReportsConstants.MODEL_TYPE_STATE:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_LEVEL_DISTRICTWISE;
-                    name = mSchoolSummaryList.get(adapterPosition).getStateName();
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
                     break;
                 case SchoolReportsConstants.MODEL_TYPE_DISTRICT:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_LEVEL_ZONEWISE;
-                    code = mSchoolSummaryList.get(adapterPosition).getDistrictCode();
-                    name = mSchoolSummaryList.get(adapterPosition).getDistrictName();
+                    code = mSchoolSummaryList.get(adapterPosition).getCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
                     break;
                 case SchoolReportsConstants.MODEL_TYPE_ZONE:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_LEVEL_CLUSTERWISE;
-                    code = mSchoolSummaryList.get(adapterPosition).getZoneCode();
-                    name = mSchoolSummaryList.get(adapterPosition).getZoneName();
+                    code = mSchoolSummaryList.get(adapterPosition).getCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
+                    Log.d(TAG,"Zone name in recyler is " + name + " and code is " + code);
                     break;
                 case SchoolReportsConstants.MODEL_TYPE_CLUSTER:
                     /*
@@ -217,13 +220,43 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
                      * We will take no action on any clicks for this case
                      */
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_LEVEL_TAKE_NO_ACTION;
-                    code = mSchoolSummaryList.get(adapterPosition).getClusterCode();
-                    name = mSchoolSummaryList.get(adapterPosition).getClusterName();
+                    code = mSchoolSummaryList.get(adapterPosition).getCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
                     break;
+
+                    /*
+                     * Level-wise report related cases start from here
+                     */
+
+                case SchoolReportsConstants.MODEL_TYPE_STATE_WISE_LIST:
+                    reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_STATE_SUMMARY;
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
+                    code = mSchoolSummaryList.get(adapterPosition).getName();
+                    break;
+
+                case SchoolReportsConstants.MODEL_TYPE_DISTRICT_WISE_LIST:
+                    reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_DISTRICT_SUMMARY;
+                    code = mSchoolSummaryList.get(adapterPosition).getCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
+                    break;
+
+                case SchoolReportsConstants.MODEL_TYPE_ZONE_WISE_LIST:
+                    reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_ZONE_SUMMARY;
+                    code = mSchoolSummaryList.get(adapterPosition).getCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
+                    break;
+
+                case SchoolReportsConstants.MODEL_TYPE_CLUSTER_WISE_LIST:
+                    reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_CLUSTER_SUMMARY;
+                    code = mSchoolSummaryList.get(adapterPosition).getCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
+                    break;
+
                 default:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_INVALID;
 
             }
+            Log.d(TAG,"Generated request for report level " + reportDisplayLevel);
             mClickHandler.onClick(reportDisplayLevel,code,name);
         }
     }

@@ -23,7 +23,403 @@ public class  SchoolReportsHelper {
     private static final String TAG = "SchoolReportsHelper";
 
     /**
-     * This method generates summary of a district in a list of type {@link ManagementWiseSchoolSummaryModel}
+     * This method generates a list of states along with the number of schools in each state
+     * in a list of type {@link ManagementWiseSchoolSummaryModel}
+     *
+     * @param cursor Cursor containing data of the desired country for the desired academic year
+     * @return a list of type {@link ManagementWiseSchoolSummaryModel} one entry per each state
+     *
+     * NOTE: Although 'management' has nothing to do with this method as we are just generating
+     * a list of states along with the number of schools in each state, i am using the same model
+     * {@link ManagementWiseSchoolSummaryModel} just to keep things simple without creating
+     * too many models.
+     */
+    public static List<ManagementWiseSchoolSummaryModel> stateWiseSummary(Cursor cursor){
+
+        if(cursor==null){
+            return null;
+        }
+
+        List<ManagementWiseSchoolSummaryModel> stateWiseSummaryList = new ArrayList<>();
+
+        Set<String> uniqueStatesSet = new HashSet<String>();
+        ArrayList<ContentValues> stateInfoList = new ArrayList<ContentValues>();
+
+        int indexColumnStateName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_STATE_NAME);
+        int indexColumnSchoolCategoryCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY);
+
+            /*
+             * Iterate over all the rows of the cursor and
+             * Create a list of distinct value of state names
+             */
+        for(int index=0;index<cursor.getCount();index++) {
+            cursor.moveToPosition(index);
+            /*
+             * Create a list of unique states found in the database
+             * Try adding state name values to the Set and
+             * check if it succeeds. If the set accepts it (returns true) then it
+             * is a distinct value. So store it in a Content Value List for later use.
+             */
+            if(uniqueStatesSet.add(cursor.getString(indexColumnStateName))){
+                ContentValues stateInfo = new ContentValues();
+                stateInfo.put(UdiseContract.RawData.COLUMN_STATE_NAME,cursor.getString(indexColumnStateName));
+                stateInfoList.add(stateInfo);
+            }
+        }
+
+
+        /*
+         * Here we will count the number of primary, middle, high and higher secondary schools
+         * for each State
+         */
+        for(int stateCounter=0;stateCounter<stateInfoList.size();stateCounter++){
+            ManagementWiseSchoolSummaryModel stateSummaryModel = new ManagementWiseSchoolSummaryModel();
+            stateSummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_STATE_WISE_LIST);
+            stateSummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_STATE_SUMMARY);
+
+            String currentState = stateInfoList.get(stateCounter).getAsString(UdiseContract.RawData.COLUMN_STATE_NAME);
+            stateSummaryModel.setName(currentState);
+            Log.d(TAG,"Current state set to " + currentState + " at position " + stateCounter);
+            stateSummaryModel.setManagementNameOrSummaryHeading(currentState);
+
+            for(int cursorRow=0;cursorRow<cursor.getCount();cursorRow++){
+
+                cursor.moveToPosition(cursorRow);
+                if(cursor.getString(indexColumnStateName).equals(currentState)){
+                    int schoolType = determineSchoolType(cursor.getInt(indexColumnSchoolCategoryCode));
+                    switch (schoolType){
+                        case SchoolReportsConstants.PRIMARY_SCHOOL:
+                            stateSummaryModel.incrementPrimarySchools();
+                            break;
+                        case SchoolReportsConstants.MIDDLE_SCHOOL:
+                            stateSummaryModel.incrementMiddleSchools();
+                            break;
+                        case SchoolReportsConstants.HIGH_SCHOOL:
+                            stateSummaryModel.incrementHighSchools();
+                            break;
+                        case SchoolReportsConstants.HIGHER_SECONDARY_SCHOOL:
+                            stateSummaryModel.incrementHigherSecondarySchools();
+                            break;
+                    }
+                }
+            }
+            /*
+             * Add this state to the list if and only if there are any schools in this state
+             * Otherwise just ignore it
+             */
+            if(stateSummaryModel.getPrimarySchools()>0 || stateSummaryModel.getMiddleSchools()>0 || stateSummaryModel.getHighSchools()>0 || stateSummaryModel.getHigherSecondarySchools()>0){
+                stateWiseSummaryList.add(stateSummaryModel);
+                Log.d(TAG,"Entry Added!!");
+            }
+        }
+        return stateWiseSummaryList;
+    }
+
+
+
+    /**
+     * This method generates a list of districts along with the number of schools in each district
+     * in a list of type {@link ManagementWiseSchoolSummaryModel}
+     *
+     * @param cursor Cursor containing data of the desired state for the desired academic year
+     * @return a list of type {@link ManagementWiseSchoolSummaryModel} one entry per each district
+     *
+     * NOTE: Although 'management' has nothing to do with this method, i am using the same model
+     * {@link ManagementWiseSchoolSummaryModel} just to keep things simple without creating
+     * too many models.
+     */
+    public static List<ManagementWiseSchoolSummaryModel> districtWiseSummary(Cursor cursor){
+
+        if(cursor==null){
+            return null;
+        }
+
+        List<ManagementWiseSchoolSummaryModel> districtWiseSummaryList = new ArrayList<>();
+
+        Set<String> uniqueDistrictCodesSet = new HashSet<String>();
+        ArrayList<ContentValues> districtInfoList = new ArrayList<ContentValues>();
+
+        int indexColumnDistrictName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_DISTRICT_NAME);
+        int indexColumnDistrictCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_DISTRICT_CODE);
+        int indexColumnSchoolCategoryCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY);
+
+
+            /*
+             * Iterate over all the rows of the cursor and
+             * Create a list of distinct value of district codes
+             */
+        for(int index=0;index<cursor.getCount();index++) {
+            cursor.moveToPosition(index);
+            /*
+             * Create a list of unique districts found in the database
+             * Try adding district code values to the Set and
+             * check if it succeeds. If the set accepts it (returns true) then it
+             * is a distinct value. So store it in a Content Value List for later use.
+             */
+            if(uniqueDistrictCodesSet.add(cursor.getString(indexColumnDistrictCode))){
+                ContentValues districtInfo = new ContentValues();
+                districtInfo.put(UdiseContract.RawData.COLUMN_DISTRICT_CODE,cursor.getString(indexColumnDistrictCode));
+                districtInfo.put(UdiseContract.RawData.COLUMN_DISTRICT_NAME,cursor.getString(indexColumnDistrictName));
+                districtInfoList.add(districtInfo);
+            }
+        }
+
+
+        /*
+         * Here we will count the number of primary, middle, high and higher secondary schools
+         * for each District
+         */
+        for(int districtCounter=0;districtCounter<districtInfoList.size();districtCounter++){
+            ManagementWiseSchoolSummaryModel districtSummaryModel = new ManagementWiseSchoolSummaryModel();
+            districtSummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_DISTRICT_WISE_LIST);
+            districtSummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_DISTRICT_SUMMARY);
+
+            String currentDistrictCode = districtInfoList.get(districtCounter).getAsString(UdiseContract.RawData.COLUMN_DISTRICT_CODE);
+            String currentDistrictName = districtInfoList.get(districtCounter).getAsString(UdiseContract.RawData.COLUMN_DISTRICT_NAME);
+            districtSummaryModel.setCode(currentDistrictCode);
+            districtSummaryModel.setName(currentDistrictName);
+            districtSummaryModel.setManagementNameOrSummaryHeading("District " + currentDistrictName);
+
+            for(int cursorRow=0;cursorRow<cursor.getCount();cursorRow++){
+
+                cursor.moveToPosition(cursorRow);
+                if(cursor.getString(indexColumnDistrictCode).equals(currentDistrictCode)){
+                    int schoolType = determineSchoolType(cursor.getInt(indexColumnSchoolCategoryCode));
+                    switch (schoolType){
+                        case SchoolReportsConstants.PRIMARY_SCHOOL:
+                            districtSummaryModel.incrementPrimarySchools();
+                            break;
+                        case SchoolReportsConstants.MIDDLE_SCHOOL:
+                            districtSummaryModel.incrementMiddleSchools();
+                            break;
+                        case SchoolReportsConstants.HIGH_SCHOOL:
+                            districtSummaryModel.incrementHighSchools();
+                            break;
+                        case SchoolReportsConstants.HIGHER_SECONDARY_SCHOOL:
+                            districtSummaryModel.incrementHigherSecondarySchools();
+                            break;
+                    }
+                }
+            }
+            /*
+             * Add this district to the list if and only if there are any schools in this district
+             * Otherwise just ignore it
+             */
+            if(districtSummaryModel.getPrimarySchools()>0 || districtSummaryModel.getMiddleSchools()>0 || districtSummaryModel.getHighSchools()>0 || districtSummaryModel.getHigherSecondarySchools()>0){
+                districtWiseSummaryList.add(districtSummaryModel);
+                Log.d(TAG,"Entry Added!!");
+            }
+        }
+        return districtWiseSummaryList;
+    }
+
+
+
+    /**
+     * This method generates a list of zones along with the number of schools in each zone
+     * in a list of type {@link ManagementWiseSchoolSummaryModel}
+     *
+     * @param cursor Cursor containing data of the desired district for the desired academic year
+     * @return a list of type {@link ManagementWiseSchoolSummaryModel} one entry per each zone
+     *
+     * NOTE: Although 'management' has nothing to do with this method, i am using the same model
+     * {@link ManagementWiseSchoolSummaryModel} just to keep things simple without creating
+     * too many models.
+     */
+    public static List<ManagementWiseSchoolSummaryModel> zoneWiseSummary(Cursor cursor){
+
+        if(cursor==null){
+            return null;
+        }
+
+        List<ManagementWiseSchoolSummaryModel> zoneWiseSummaryList = new ArrayList<>();
+
+        Set<String> uniqueZoneCodesSet = new HashSet<String>();
+        ArrayList<ContentValues> zoneInfoList = new ArrayList<ContentValues>();
+
+        int indexColumnZoneName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_ZONE_NAME);
+        int indexColumnZoneCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_ZONE_CODE);
+        int indexColumnSchoolCategoryCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY);
+
+
+            /*
+             * Iterate over all the rows of the cursor and
+             * Create a list of distinct value of zone codes
+             */
+        for(int index=0;index<cursor.getCount();index++) {
+            cursor.moveToPosition(index);
+            /*
+             * Create a list of unique zones found in the cursor
+             * Try adding zone code values to the Set and
+             * check if it succeeds. If the set accepts it (returns true) then it
+             * is a distinct value. So store it in a Content Value List for later use.
+             */
+            if(uniqueZoneCodesSet.add(cursor.getString(indexColumnZoneCode))){
+                ContentValues zoneInfo = new ContentValues();
+                zoneInfo.put(UdiseContract.RawData.COLUMN_ZONE_CODE,cursor.getString(indexColumnZoneCode));
+                zoneInfo.put(UdiseContract.RawData.COLUMN_ZONE_NAME,cursor.getString(indexColumnZoneName));
+                zoneInfoList.add(zoneInfo);
+            }
+        }
+
+
+        /*
+         * Here we will count the number of primary, middle, high and higher secondary schools
+         * for each Zone
+         */
+        for(int zoneCounter=0;zoneCounter<zoneInfoList.size();zoneCounter++){
+            ManagementWiseSchoolSummaryModel zoneSummaryModel = new ManagementWiseSchoolSummaryModel();
+            zoneSummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_ZONE_WISE_LIST);
+            zoneSummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_ZONE_SUMMARY);
+
+            String currentZoneCode = zoneInfoList.get(zoneCounter).getAsString(UdiseContract.RawData.COLUMN_ZONE_CODE);
+            String currentZoneName = zoneInfoList.get(zoneCounter).getAsString(UdiseContract.RawData.COLUMN_ZONE_NAME);
+            zoneSummaryModel.setCode(currentZoneCode);
+            zoneSummaryModel.setName(currentZoneName);
+            zoneSummaryModel.setManagementNameOrSummaryHeading("Zone " + currentZoneName);
+
+            for(int cursorRow=0;cursorRow<cursor.getCount();cursorRow++){
+
+                cursor.moveToPosition(cursorRow);
+                if(cursor.getString(indexColumnZoneCode).equals(currentZoneCode)){
+                    int schoolType = determineSchoolType(cursor.getInt(indexColumnSchoolCategoryCode));
+                    switch (schoolType){
+                        case SchoolReportsConstants.PRIMARY_SCHOOL:
+                            zoneSummaryModel.incrementPrimarySchools();
+                            break;
+                        case SchoolReportsConstants.MIDDLE_SCHOOL:
+                            zoneSummaryModel.incrementMiddleSchools();
+                            break;
+                        case SchoolReportsConstants.HIGH_SCHOOL:
+                            zoneSummaryModel.incrementHighSchools();
+                            break;
+                        case SchoolReportsConstants.HIGHER_SECONDARY_SCHOOL:
+                            zoneSummaryModel.incrementHigherSecondarySchools();
+                            break;
+                    }
+                }
+            }
+            /*
+             * Add this zone to the list if and only if there are any schools in this zone
+             * Otherwise just ignore it
+             */
+            if(zoneSummaryModel.getPrimarySchools()>0 || zoneSummaryModel.getMiddleSchools()>0 || zoneSummaryModel.getHighSchools()>0 || zoneSummaryModel.getHigherSecondarySchools()>0){
+                zoneWiseSummaryList.add(zoneSummaryModel);
+                Log.d(TAG,"Entry Added!!");
+            }
+        }
+        return zoneWiseSummaryList;
+    }
+
+
+
+    /**
+     * This method generates a list of clusters along with the number of schools in each cluster
+     * in a list of type {@link ManagementWiseSchoolSummaryModel}
+     *
+     * @param cursor Cursor containing data of the desired zone for the desired academic year
+     * @return a list of type {@link ManagementWiseSchoolSummaryModel} one entry per each cluster
+     *
+     * NOTE: Although 'management' has nothing to do with this method, i am using the same model
+     * {@link ManagementWiseSchoolSummaryModel} just to keep things simple without creating
+     * too many models.
+     */
+    public static List<ManagementWiseSchoolSummaryModel> clusterWiseSummary(Cursor cursor){
+
+        if(cursor==null){
+            return null;
+        }
+
+        List<ManagementWiseSchoolSummaryModel> clusterWiseSummaryList = new ArrayList<>();
+
+        Set<String> uniqueClusterCodesSet = new HashSet<String>();
+        ArrayList<ContentValues> clusterInfoList = new ArrayList<ContentValues>();
+
+        int indexColumnClusterName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_CLUSTER_NAME);
+        int indexColumnClusterCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_CLUSTER_CODE);
+        int indexColumnSchoolCategoryCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY);
+
+
+            /*
+             * Iterate over all the rows of the cursor and
+             * Create a list of distinct value of cluster codes
+             */
+        for(int index=0;index<cursor.getCount();index++) {
+            cursor.moveToPosition(index);
+            /*
+             * Create a list of unique clusters found in the cursor
+             * Try adding cluster code values to the Set and
+             * check if it succeeds. If the set accepts it (returns true) then it
+             * is a distinct value. So store it in a Content Value List for later use.
+             */
+            if(uniqueClusterCodesSet.add(cursor.getString(indexColumnClusterCode))){
+                ContentValues clusterInfo = new ContentValues();
+                clusterInfo.put(UdiseContract.RawData.COLUMN_CLUSTER_CODE,cursor.getString(indexColumnClusterCode));
+                clusterInfo.put(UdiseContract.RawData.COLUMN_CLUSTER_NAME,cursor.getString(indexColumnClusterName));
+                clusterInfoList.add(clusterInfo);
+            }
+        }
+
+
+        /*
+         * Here we will count the number of primary, middle, high and higher secondary schools
+         * for each Cluster
+         */
+        for(int clusterCounter=0;clusterCounter<clusterInfoList.size();clusterCounter++){
+            ManagementWiseSchoolSummaryModel clusterSummaryModel = new ManagementWiseSchoolSummaryModel();
+            clusterSummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_CLUSTER_WISE_LIST);
+            clusterSummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_CLUSTER_SUMMARY);
+
+            String currentClusterCode = clusterInfoList.get(clusterCounter).getAsString(UdiseContract.RawData.COLUMN_CLUSTER_CODE);
+            String currentClusterName = clusterInfoList.get(clusterCounter).getAsString(UdiseContract.RawData.COLUMN_CLUSTER_NAME);
+            clusterSummaryModel.setCode(currentClusterCode);
+            clusterSummaryModel.setName(currentClusterName);
+            clusterSummaryModel.setManagementNameOrSummaryHeading("Cluster " + currentClusterName);
+
+            for(int cursorRow=0;cursorRow<cursor.getCount();cursorRow++){
+
+                cursor.moveToPosition(cursorRow);
+                if(cursor.getString(indexColumnClusterCode).equals(currentClusterCode)){
+                    int schoolType = determineSchoolType(cursor.getInt(indexColumnSchoolCategoryCode));
+                    switch (schoolType){
+                        case SchoolReportsConstants.PRIMARY_SCHOOL:
+                            clusterSummaryModel.incrementPrimarySchools();
+                            break;
+                        case SchoolReportsConstants.MIDDLE_SCHOOL:
+                            clusterSummaryModel.incrementMiddleSchools();
+                            break;
+                        case SchoolReportsConstants.HIGH_SCHOOL:
+                            clusterSummaryModel.incrementHighSchools();
+                            break;
+                        case SchoolReportsConstants.HIGHER_SECONDARY_SCHOOL:
+                            clusterSummaryModel.incrementHigherSecondarySchools();
+                            break;
+                    }
+                }
+            }
+            /*
+             * Add this cluster to the list if and only if there are any schools in this cluster
+             * Otherwise just ignore it
+             */
+            if(clusterSummaryModel.getPrimarySchools()>0 || clusterSummaryModel.getMiddleSchools()>0 || clusterSummaryModel.getHighSchools()>0 || clusterSummaryModel.getHigherSecondarySchools()>0){
+                clusterWiseSummaryList.add(clusterSummaryModel);
+                Log.d(TAG,"Entry Added!!");
+            }
+        }
+        return clusterWiseSummaryList;
+    }
+
+
+    /**********************************
+     * Summary Methods Start From Here
+     * *******************************
+     */
+
+
+
+
+    /**
+     * This method generates summary of the whole nation in a list of type {@link ManagementWiseSchoolSummaryModel}
      * The first item in the list contains the total number of Primary, Middle, High, and Higher Secondary
      * Schools in the whole country.
      * Subsequent items in the list contain number of Primary, Middle, High, and Higher Secondary Schools
@@ -180,7 +576,7 @@ public class  SchoolReportsHelper {
         ManagementWiseSchoolSummaryModel stateSummary = new ManagementWiseSchoolSummaryModel();
         stateSummary.setModelType(SchoolReportsConstants.MODEL_TYPE_STATE);
         stateSummary.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_STATE_SUMMARY);
-        stateSummary.setStateName(stateName);
+        stateSummary.setName(stateName);
         stateSummary.setManagementNameOrSummaryHeading(stateName + " Summary");
 
             /*
@@ -236,7 +632,7 @@ public class  SchoolReportsHelper {
             ManagementWiseSchoolSummaryModel managementWiseSchoolSummaryModel = new ManagementWiseSchoolSummaryModel();
             managementWiseSchoolSummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_STATE);
             managementWiseSchoolSummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_MANAGEMENT_DETAIL);
-            managementWiseSchoolSummaryModel.setStateName(stateName);
+            managementWiseSchoolSummaryModel.setName(stateName);
 
             managementWiseSchoolSummaryModel.setManagementNameOrSummaryHeading(managementInfoList.get(mgmtCounter).getAsString(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION));
 
@@ -311,8 +707,8 @@ public class  SchoolReportsHelper {
         ManagementWiseSchoolSummaryModel districtSummary = new ManagementWiseSchoolSummaryModel();
         districtSummary.setModelType(SchoolReportsConstants.MODEL_TYPE_DISTRICT);
         districtSummary.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_DISTRICT_SUMMARY);
-        districtSummary.setDistrictCode(districtCode);
-        districtSummary.setDistrictName(districtName);
+        districtSummary.setCode(districtCode);
+        districtSummary.setName(districtName);
         districtSummary.setManagementNameOrSummaryHeading("District " + districtName + " Summary");
 
             /*
@@ -368,8 +764,8 @@ public class  SchoolReportsHelper {
             ManagementWiseSchoolSummaryModel managementWiseSchoolSummaryModel = new ManagementWiseSchoolSummaryModel();
             managementWiseSchoolSummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_DISTRICT);
             managementWiseSchoolSummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_MANAGEMENT_DETAIL);
-            managementWiseSchoolSummaryModel.setDistrictCode(districtCode);
-            managementWiseSchoolSummaryModel.setDistrictName(districtName);
+            managementWiseSchoolSummaryModel.setCode(districtCode);
+            managementWiseSchoolSummaryModel.setName(districtName);
 
             managementWiseSchoolSummaryModel.setManagementNameOrSummaryHeading(managementInfoList.get(mgmtCounter).getAsString(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION));
 
@@ -443,8 +839,8 @@ public class  SchoolReportsHelper {
         ManagementWiseSchoolSummaryModel zoneSummary = new ManagementWiseSchoolSummaryModel();
         zoneSummary.setModelType(SchoolReportsConstants.MODEL_TYPE_ZONE);
         zoneSummary.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_ZONE_SUMMARY);
-        zoneSummary.setDistrictCode(zoneCode);
-        zoneSummary.setDistrictName(zoneName);
+        zoneSummary.setCode(zoneCode);
+        zoneSummary.setName(zoneName);
         zoneSummary.setManagementNameOrSummaryHeading("Zone " + zoneName + " Summary");
 
             /*
@@ -500,8 +896,8 @@ public class  SchoolReportsHelper {
             ManagementWiseSchoolSummaryModel managementWiseSchoolSummaryModel = new ManagementWiseSchoolSummaryModel();
             managementWiseSchoolSummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_ZONE);
             managementWiseSchoolSummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_MANAGEMENT_DETAIL);
-            managementWiseSchoolSummaryModel.setDistrictCode(zoneCode);
-            managementWiseSchoolSummaryModel.setDistrictName(zoneName);
+            managementWiseSchoolSummaryModel.setCode(zoneCode);
+            managementWiseSchoolSummaryModel.setName(zoneName);
 
             managementWiseSchoolSummaryModel.setManagementNameOrSummaryHeading(managementInfoList.get(mgmtCounter).getAsString(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION));
 
@@ -574,8 +970,8 @@ public class  SchoolReportsHelper {
         ManagementWiseSchoolSummaryModel clusterSummary = new ManagementWiseSchoolSummaryModel();
         clusterSummary.setModelType(SchoolReportsConstants.MODEL_TYPE_CLUSTER);
         clusterSummary.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_CLUSTER_SUMMARY);
-        clusterSummary.setClusterCode(clusterCode);
-        clusterSummary.setClusterName(clusterName);
+        clusterSummary.setCode(clusterCode);
+        clusterSummary.setName(clusterName);
         clusterSummary.setManagementNameOrSummaryHeading("Cluster " + clusterName + " Summary");
 
             /*
@@ -631,8 +1027,8 @@ public class  SchoolReportsHelper {
             ManagementWiseSchoolSummaryModel managementWiseSchoolSummaryModel = new ManagementWiseSchoolSummaryModel();
             managementWiseSchoolSummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_CLUSTER);
             managementWiseSchoolSummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_MANAGEMENT_DETAIL);
-            managementWiseSchoolSummaryModel.setClusterCode(clusterCode);
-            managementWiseSchoolSummaryModel.setClusterName(clusterName);
+            managementWiseSchoolSummaryModel.setCode(clusterCode);
+            managementWiseSchoolSummaryModel.setName(clusterName);
 
             managementWiseSchoolSummaryModel.setManagementNameOrSummaryHeading(managementInfoList.get(mgmtCounter).getAsString(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION));
 

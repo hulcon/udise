@@ -11,6 +11,11 @@ public class SchoolReportsConstants {
     public static final int MODEL_TYPE_ZONE = 400;
     public static final int MODEL_TYPE_CLUSTER = 500;
 
+    public static final int MODEL_TYPE_STATE_WISE_LIST = 10;
+    public static final int MODEL_TYPE_DISTRICT_WISE_LIST = 20;
+    public static final int MODEL_TYPE_ZONE_WISE_LIST = 30;
+    public static final int MODEL_TYPE_CLUSTER_WISE_LIST = 40;
+
     public static final int PRIMARY_SCHOOL = 1000;
     public static final int MIDDLE_SCHOOL = 2000;
     public static final int HIGH_SCHOOL = 3000;
@@ -38,6 +43,7 @@ public class SchoolReportsConstants {
     public static final int REPORT_DISPLAY_INVALID = -1;
 
     public static final String EXTRA_PARAM_KEY_REPORT_DISPLAY_SUMMARY_TYPE = "in.hulum.udise.extra.REPORT_DISPLAY_SUMMARY";
+    public static final String EXTRA_PARAM_KEY_REPORT_DISPLAY_LEVEL_WISE_TYPE = "in.hulum.udise.extra.REPORT_DISPLAY_LEVEL_WISE_TYPE";
 
     public static final String EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER = "in.hulum.udise.extra.DISTRICT_ZONE_CLUSTER_CODE";
     public static final String EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER = "in.hulum.udise.extra.STATE_DISTRICT_ZONE_CLUSTER_NAME";
