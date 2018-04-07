@@ -1,6 +1,5 @@
 package in.hulum.udise;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -8,7 +7,6 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.app.NavUtils;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
@@ -16,7 +14,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -43,8 +40,8 @@ public class NumberOfSchools extends AppCompatActivity implements
 
     private static final String TAG = "NumberOfSchools";
 
-    Button buttonShowReport;
-    RadioButton radioButtonZoneWise;
+   /* Button buttonShowReport;
+    RadioButton radioButtonZoneWise;*/
 
     private String stateName;
     private String districtCode;
@@ -82,6 +79,7 @@ public class NumberOfSchools extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_number_of_schools);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 
         setSupportActionBar(toolbar);
@@ -223,7 +221,7 @@ public class NumberOfSchools extends AppCompatActivity implements
         LinearLayoutManager layoutManager = new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false);
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.setHasFixedSize(true);
-        numberOfSchoolsSummaryAdapter = new NumberOfSchoolsSummaryAdapter(this,this);
+        numberOfSchoolsSummaryAdapter = new NumberOfSchoolsSummaryAdapter(this,this,false);
         mRecyclerView.setAdapter(numberOfSchoolsSummaryAdapter);
 
 
@@ -252,7 +250,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                 loaderId = ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_STATE_SUMMARY_LOADER;
                 if(showTitleInsteadOfSpinner){
                     getSupportActionBar().setTitle(stateName);
-                    getSupportActionBar().setSubtitle(academicYear);
+                    getSupportActionBar().setSubtitle("Management-wise Details " + academicYear);
                 }
                 break;
 
@@ -262,7 +260,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                 loaderId = ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_DISTRICT_SUMMARY_LOADER;
                 if(showTitleInsteadOfSpinner){
                     getSupportActionBar().setTitle(districtName + " - " + districtCode);
-                    getSupportActionBar().setSubtitle(academicYear);
+                    getSupportActionBar().setSubtitle("Management-wise Details " + academicYear);
                 }
                 break;
 
@@ -272,7 +270,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                 loaderId = ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_ZONE_SUMMARY_LOADER;
                 if(showTitleInsteadOfSpinner){
                     getSupportActionBar().setTitle(zoneName + " - " + zoneCode);
-                    getSupportActionBar().setSubtitle(academicYear);
+                    getSupportActionBar().setSubtitle("Management-wise Details " + academicYear);
                 }
                 break;
 
@@ -282,7 +280,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                 loaderId = ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_CLUSTER_SUMMARY_LOADER;
                 if(showTitleInsteadOfSpinner){
                     getSupportActionBar().setTitle(clusterName + " - " + clusterCode);
-                    getSupportActionBar().setSubtitle(academicYear);
+                    getSupportActionBar().setSubtitle("Management-wise Details " + academicYear);
                 }
                 break;
         }
@@ -417,6 +415,10 @@ public class NumberOfSchools extends AppCompatActivity implements
             default:
                 throw new RuntimeException("Loader not implemented yet in onLoadFinished with id " + loader.getId());
         }
+        if(mPosition == RecyclerView.NO_POSITION){
+            mPosition = 0;
+        }
+        mRecyclerView.smoothScrollToPosition(mPosition);
 
     }
 

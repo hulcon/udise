@@ -43,6 +43,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
 
     private static final String TAG = "NumOfSchoolsLevelWise";
 
+
     private String stateName;
     private String districtCode;
     private String districtName;
@@ -127,7 +128,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
         LinearLayoutManager layoutManager = new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false);
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.setHasFixedSize(true);
-        numberOfSchoolsSummaryAdapter = new NumberOfSchoolsSummaryAdapter(this,this);
+        numberOfSchoolsSummaryAdapter = new NumberOfSchoolsSummaryAdapter(this,this,true);
         mRecyclerView.setAdapter(numberOfSchoolsSummaryAdapter);
 
         arguments = new Bundle();
@@ -148,7 +149,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
                 arguments.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,stateName);
                 loaderId = ID_NUMBER_OF_SCHOOLS_DISTRICT_WISE_LOADER;
                 getSupportActionBar().setTitle(stateName);
-                getSupportActionBar().setSubtitle(academicYear);
+                getSupportActionBar().setSubtitle("District-wise Summary List");
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_ZONEWISE:
@@ -156,7 +157,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
                 arguments.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,districtName);
                 loaderId = ID_NUMBER_OF_SCHOOLS_ZONE_WISE_LOADER;
                 getSupportActionBar().setTitle(districtName + " - " + districtCode);
-                getSupportActionBar().setSubtitle(academicYear);
+                getSupportActionBar().setSubtitle("Zone-wise Summary List");
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_CLUSTERWISE:
@@ -164,7 +165,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
                 arguments.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneName);
                 loaderId = ID_NUMBER_OF_SCHOOLS_CLUSTER_WISE_LOADER;
                 getSupportActionBar().setTitle(zoneName + " - " + zoneCode);
-                getSupportActionBar().setSubtitle(academicYear);
+                getSupportActionBar().setSubtitle("Cluster-wise Summary List");
                 Log.d(TAG,"Switchcase for clusterwise activated with zone name " + zoneName);
                 break;
         }
@@ -280,6 +281,10 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
             default:
                 throw new RuntimeException("Loader not implemented yet in onLoadFinished with id " + loader.getId());
         }
+        if(mPosition == RecyclerView.NO_POSITION){
+            mPosition = 0;
+        }
+        mRecyclerView.smoothScrollToPosition(mPosition);
 
     }
 

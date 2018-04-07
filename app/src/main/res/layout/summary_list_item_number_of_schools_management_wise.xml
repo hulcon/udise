@@ -26,14 +26,16 @@
             app:layout_constraintGuide_percent="0.5" />
 
 
-
         <TextView
             android:id="@+id/textview_summary_cardview_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/standard_margin"
+            android:background="@android:color/holo_blue_light"
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -153,8 +155,6 @@
             android:id="@+id/textview_summary_total_schools"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Headline"
@@ -168,8 +168,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
             android:text="Total Schools"
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Subhead"

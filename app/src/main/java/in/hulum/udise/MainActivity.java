@@ -108,11 +108,11 @@ public class MainActivity extends AppCompatActivity
                 Log.d(TAG,"Broadcast Received");
                 boolean rawDataExistsInDatabase = intent.getBooleanExtra(ImportUdiseData.PARAM_DOES_RAW_DATA_EXIST,false);
                 if(rawDataExistsInDatabase){
-                    Toast.makeText(getApplicationContext(),"Database Exists!!! YaaY",Toast.LENGTH_SHORT).show();
-                    Intent tempIntent = new Intent(MainActivity.this,NumberOfSchools.class);
-                    startActivity(tempIntent);
+
                     switch (clickedButtonId){
                         case R.id.button_number_of_schools:
+                            Intent tempIntent = new Intent(MainActivity.this,NumberOfSchools.class);
+                            startActivity(tempIntent);
                             break;
                     }
                 } else {
@@ -223,9 +223,6 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_import_raw_data) {
-           /* Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("application/vnd.ms-excel");
-            startActivityForResult(intent, REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT);*/
             Log.d(TAG,"Import item in drawer clicked");
             ImportDialogFragment importDialogFragment = new ImportDialogFragment();
             importDialogFragment.setCancelable(false);

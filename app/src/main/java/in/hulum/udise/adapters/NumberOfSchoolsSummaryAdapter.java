@@ -42,6 +42,24 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
      */
     final private NumberOfSchoolsSummaryAdapterOnClickHandler mClickHandler;
 
+    /*
+     * This boolean flag is used to determine if we need to use the same layout
+     * for all the items in the recyclerview or use two different layouts, one
+     * for the first item and a second layout for the rest of the items.
+     *
+     * When displaying a management-wise summary like the summary of a district
+     * this flag should be false. Because in such a case, the first item in the
+     * recyclerview displays the summary of the whole district and the rest of the
+     * items display the management wise details. So a different layout is used for
+     * the first item (summary) and a different layout is used for the rest of the
+     * items (management-wise details.
+     *
+     * When displaying level-wise list like zone-wise list summary, each entry
+     * represents a similar entity, summary of a zone in this case. So each item must use
+     * the same layout file. Hence this flag must be true in this case.
+     */
+    private boolean mShouldUseOneLayoutInsteadOfTwo;
+
     /**
      * The interface that receives onClick messages
      */
@@ -51,9 +69,10 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
 
     private List<NumberOfSchoolsModel> numberOfSchoolsModelList;
 
-    public NumberOfSchoolsSummaryAdapter(@NonNull Context context,NumberOfSchoolsSummaryAdapterOnClickHandler clickHandler){
+    public NumberOfSchoolsSummaryAdapter(@NonNull Context context,NumberOfSchoolsSummaryAdapterOnClickHandler clickHandler,boolean isLevelWiseModule){
         mContext = context;
         mClickHandler = clickHandler;
+        mShouldUseOneLayoutInsteadOfTwo = isLevelWiseModule;
     }
     /**
      * Called when RecyclerView needs a new {@link android.support.v7.widget.RecyclerView.ViewHolder} of the given type to represent
@@ -79,16 +98,31 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
     public NumberOfSchoolsSummaryAdapter.NumberOfSchoolsViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         int layoutId;
 
-        switch (viewType){
-            case VIEW_TYPE_SUMMARY:
-                layoutId = R.layout.summary_list_item_number_of_schools;
-                break;
-            case VIEW_TYPE_MANAGEMENT_ITEM:
-                layoutId = R.layout.summary_list_item_number_of_schools_management_wise;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid view type passed to NumberOfSchools RecyclerView");
+        if(mShouldUseOneLayoutInsteadOfTwo){
+            /*
+             * If this is a level-wise summary list like a zone-wise list,
+             * use a single layout file
+             */
+            layoutId = R.layout.summary_list_item_number_of_schools;
+
+        } else{
+            /*
+             * Otherwise, use two layouts. One for the first item, the summary.
+             * Another layout for the rest of the items, the management-wise
+             * summary.
+             */
+            switch (viewType){
+                case VIEW_TYPE_SUMMARY:
+                    layoutId = R.layout.summary_list_item_number_of_schools;
+                    break;
+                case VIEW_TYPE_MANAGEMENT_ITEM:
+                    layoutId = R.layout.summary_list_item_number_of_schools_management_wise;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid view type passed to NumberOfSchools RecyclerView");
+            }
         }
+
 
         View view = LayoutInflater.from(mContext).inflate(layoutId,parent,false);
         view.setFocusable(true);
