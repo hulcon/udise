@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -27,6 +28,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -36,6 +38,7 @@ import in.hulum.udise.fragments.EnrolmentReportsFragment;
 import in.hulum.udise.fragments.ImportDialogFragment;
 import in.hulum.udise.fragments.SchoolReportsFragment;
 import in.hulum.udise.fragments.TeacherReportsFragment;
+import in.hulum.udise.utils.SchoolReportsConstants;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -46,6 +49,10 @@ public class MainActivity extends AppCompatActivity
 
     private static final String TAG = MainActivity.class.getSimpleName();
     static final int REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT = 7;
+
+    private SharedPreferences mPreferences;
+    private String sharedPrefFile = SchoolReportsConstants.SHARED_PREFERENCES_FILE;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,8 +83,16 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
+
+
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        /*
+         * Determine the user type on background thread so that appropriate
+         * title and subtitle can be set on the navigation drawer
+         */
+        ImportJobIntentService.startActionDetermineUserType(this);
 
         /*ActionBar supportActionBar = getSupportActionBar();
         if(supportActionBar != null){
@@ -86,6 +101,7 @@ public class MainActivity extends AppCompatActivity
             supportActionBar.setDisplayHomeAsUpEnabled(true);
         }*/
     }
+
 
     @Override
     public void onBackPressed() {
@@ -123,48 +139,32 @@ public class MainActivity extends AppCompatActivity
 
 
                 }
-                //progressBar.setProgress(value);
-                //textviewPercentage.setText(message);
-                //buttonNumberOfSchools.setEnabled(true);
             }
 
-            /*else if(intent.getAction().equals(ImportData.ACTION_IMPORT_RAW_DATA)){
-                boolean isError = intent.getBooleanExtra(ImportData.PARAM_ERROR,false);
-                boolean isAnalyzing = intent.getBooleanExtra(ImportData.PARAM_IS_ANALYSING,false);
-                boolean isImporting = intent.getBooleanExtra(ImportData.PARAM_IS_IMPORTING,false);
-                boolean isUserIdentified = intent.getBooleanExtra(ImportData.PARAM_USER_IDENTIFIED,false);
-                //Log.d(TAG,"error is " + isError + " analysing " + isAnalyzing + " importing " + isImporting + " user identified " + isUserIdentified);
-                if(isError){
-                    String msg = intent.getStringExtra(ImportData.PARAM_MESSAGE);
-                    textviewPercentage.setText(msg);
-                }
-                else if(isAnalyzing){
-                    String msg = intent.getStringExtra(ImportData.PARAM_MESSAGE);
-                    int value = intent.getIntExtra(ImportData.PARAM_PERCENTAGE_COMPLETED,0);
-                    textviewPercentage.setText(msg);
-                    progressBar.setProgress(value);
-                    //Log.d(TAG,"Analysing message " + msg + " and percent " + value);
-                }
-                else if(isImporting){
-                    String msg = intent.getStringExtra(ImportData.PARAM_MESSAGE);
-                    int value = intent.getIntExtra(ImportData.PARAM_PERCENTAGE_COMPLETED,0);
-                    textviewPercentage.setText(msg);
-                    progressBar.setProgress(value);
-                }
-                else if(isUserIdentified){
-                    String msg = intent.getStringExtra(ImportData.PARAM_MESSAGE);
-                    textviewPercentage.setText(msg);
-                    Log.d(TAG,"User identified is " + intent.getStringExtra(ImportData.PARAM_USER_TYPE));
-                }
-                else{
-                    String msg = intent.getStringExtra(ImportData.PARAM_MESSAGE);
-                    textviewPercentage.setText(msg);
-                    //Log.d(TAG,"Percent completed is  " + intent.getIntExtra(ImportData.PARAM_PERCENTAGE_COMPLETED,-1));
-                    //Log.d(TAG,"Message is " + msg);
-                }
-            }*/
+            else if(intent.getAction().equals(ImportUdiseData.ACTION_DETERMINE_USER_TYPE)){
+                /*
+                 * This broadcast is received either whan an excel file is imported
+                 * or this app is started. This broadcast means that the user type
+                 * has been determined on the basis of data found in the database
+                 * and the user type has been stored in shared preferences.
+                 * We just need to read the shared preferences and update the
+                 * title and subtitle of navigation drawer header
+                 */
+                Log.d(TAG,"Broadcast for usertype received");
+                mPreferences = getSharedPreferences(sharedPrefFile,Context.MODE_PRIVATE);
+                String navigationDrawerUserTypeString = mPreferences.getString(SchoolReportsConstants.SHARED_PREFERENCES_NAVIGATION_DRAWER_USER_TYPE_STRING,"Unknown User");
+                String navigationDrawerSubtitle = mPreferences.getString(SchoolReportsConstants.SHARED_PREFERENCES_NAVIGATION_DRAWER_SUBTITLE,"Unknown Office");
+                NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+                TextView textViewNavigationDrawerUserType = navigationView.getHeaderView(0).findViewById(R.id.textview_drawer_usertype);
+                textViewNavigationDrawerUserType.setText(navigationDrawerUserTypeString);
+                TextView textViewNavigationDrawerSubtitle = navigationView.getHeaderView(0).findViewById(R.id.textview_drawer_subtitle);
+                textViewNavigationDrawerSubtitle.setText(navigationDrawerSubtitle);
+                Toast.makeText(context,"Bcast: Navigation Drawer Updated",Toast.LENGTH_SHORT).show();
+            }
         }
     }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -191,8 +191,10 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG,"Onresume called");
         IntentFilter myFilter = new IntentFilter();
         myFilter.addAction(ImportUdiseData.ACTION_DOES_RAW_DATA_EXISTS_IN_DATABASE);
+        myFilter.addAction(ImportUdiseData.ACTION_DETERMINE_USER_TYPE);
         LocalBroadcastManager.getInstance(this).registerReceiver(responseReceiver,myFilter);
     }
 
@@ -244,6 +246,8 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+
 
     private void setupViewPager(ViewPager viewPager){
         Adapter adapter = new Adapter(getSupportFragmentManager());

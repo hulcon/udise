@@ -6,13 +6,7 @@ package in.hulum.udise.models;
 
 public class ManagementWiseSchoolSummaryModel {
 
- /*   private String stateName;
-    private String districtCode;
-    private String districtName;
-    private String zoneCode;
-    private String zoneName;
-    private String clusterCode;
-    private String clusterName;*/
+
     private String code;
     private String name;
 
@@ -48,61 +42,6 @@ public class ManagementWiseSchoolSummaryModel {
         this.name = name;
     }
 
-    /*  public String getStateName() {
-        return stateName;
-    }
-
-    public void setStateName(String stateName) {
-        this.stateName = stateName;
-    }
-
-    public String getDistrictCode() {
-        return districtCode;
-    }
-
-    public void setDistrictCode(String districtCode) {
-        this.districtCode = districtCode;
-    }
-
-    public String getDistrictName() {
-        return districtName;
-    }
-
-    public void setDistrictName(String districtName) {
-        this.districtName = districtName;
-    }
-
-    public String getZoneCode() {
-        return zoneCode;
-    }
-
-    public void setZoneCode(String zoneCode) {
-        this.zoneCode = zoneCode;
-    }
-
-    public String getZoneName() {
-        return zoneName;
-    }
-
-    public void setZoneName(String zoneName) {
-        this.zoneName = zoneName;
-    }
-
-    public String getClusterCode() {
-        return clusterCode;
-    }
-
-    public void setClusterCode(String clusterCode) {
-        this.clusterCode = clusterCode;
-    }
-
-    public String getClusterName() {
-        return clusterName;
-    }
-
-    public void setClusterName(String clusterName) {
-        this.clusterName = clusterName;
-    }*/
 
     public int getModelType() {
         return modelType;

@@ -7,7 +7,7 @@
         <item
             android:id="@+id/nav_import_raw_data"
             android:icon="@drawable/ic_raw_data"
-            android:title="Import Raw Data" />
+            android:title="Import School Data" />
         <item
             android:id="@+id/nav_import_teacher_data"
             android:icon="@drawable/ic_teacher_data"

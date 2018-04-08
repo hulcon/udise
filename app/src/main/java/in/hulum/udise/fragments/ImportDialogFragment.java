@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.JobIntentService;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,7 +20,9 @@ import android.widget.Toast;
 
 import in.hulum.udise.ImportJobIntentService;
 import in.hulum.udise.ImportUdiseData;
+import in.hulum.udise.MainActivity;
 import in.hulum.udise.R;
+import in.hulum.udise.utils.SchoolReportsConstants;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -37,7 +40,7 @@ public class ImportDialogFragment extends DialogFragment {
     private ResponseReceiver responseReceiver = new ResponseReceiver();
 
     private SharedPreferences mPreferences;
-    private String sharedPrefFile = "in.hulum.udise.sharedprefs";
+    private String sharedPrefFile = SchoolReportsConstants.SHARED_PREFERENCES_FILE;
 
     static final int REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT = 7;
 
@@ -107,9 +110,14 @@ public class ImportDialogFragment extends DialogFragment {
                 preferenceEditor.putBoolean(SHARED_PREFERENCES_KEY_IS_IMPORTING,false);
                 preferenceEditor.putInt(SHARED_PREFERENCES_KEY_PROGRESS,percentageCompleted);
                 preferenceEditor.apply();
+
+                /*
+                 * Determine the user type on background thread so that appropriate
+                 * title and subtitle can be set on the navigation drawer in mainactivity
+                 */
+                ImportJobIntentService.startActionDetermineUserType(getContext());
             }
         }
-        Log.d(TAG,"IsImporting flag is " + isImporting + " and progresspercentage is " + progressPercentage);
     }
 
     @Override
@@ -159,6 +167,26 @@ public class ImportDialogFragment extends DialogFragment {
                 Log.d(TAG,"error is " + isError + " analysing " + isAnalyzing + " importing " + isImporting + " user identified " + isUserIdentified);
                 if(hasFinishedImportingSuccessfully){
                     getDialog().dismiss();
+                    /*
+                     * If this broadcast is being received by the fragment then
+                     * it means that the fragment is in the foreground.
+                     * Since the JobIntentService updates the shared preferences
+                     * even when the fragment is in the foreground, we need to
+                     * reset the preferences here so that the dialog appears the
+                     * next time if needed.
+                     *
+                     */
+                    int percentageCompleted = 0;
+                    SharedPreferences.Editor preferenceEditor = mPreferences.edit();
+                    preferenceEditor.putBoolean(SHARED_PREFERENCES_KEY_IS_IMPORTING,false);
+                    preferenceEditor.putInt(SHARED_PREFERENCES_KEY_PROGRESS,percentageCompleted);
+                    preferenceEditor.apply();
+
+                    /*
+                     * Determine the user type on background thread so that appropriate
+                     * title and subtitle can be set on the navigation drawer in mainactivity
+                     */
+                    ImportJobIntentService.startActionDetermineUserType(context);
                 }
                 else if(isError){
                     String msg = intent.getStringExtra(ImportUdiseData.PARAM_MESSAGE);

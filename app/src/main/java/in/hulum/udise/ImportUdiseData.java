@@ -34,6 +34,7 @@ import in.hulum.udise.database.UdiseDbHelper;
 import in.hulum.udise.models.NumberOfSchoolsModel;
 import in.hulum.udise.models.UserDataModel;
 import in.hulum.udise.utils.NotificationHelper;
+import in.hulum.udise.utils.SchoolReportsConstants;
 
 /**
  * Created by Irshad on 20-03-2018.
@@ -44,6 +45,7 @@ public class ImportUdiseData {
     public static final String ACTION_BAZ = "in.hulum.udise.action.BAZ";
     public static final String ACTION_IMPORT_RAW_DATA = "in.hulum.udise.action.IMPORT_RAW_DATA";
     public static final String ACTION_DOES_RAW_DATA_EXISTS_IN_DATABASE = "in.hulum.udise.action.DOES_RAW_DATA_EXIST_IN_DATABASE";
+    public static final String ACTION_DETERMINE_USER_TYPE = "in.hulum.udise.action.DETERMINE_USER_TYPE";
 
     public static final String PARAM_DOES_RAW_DATA_EXIST = "in.hulum.udise.extra.PARAM_DOES_RAW_DATA_EXIST";
     public static final String EXTRA_PARAM1 = "in.hulum.udise.extra.PARAM1";
@@ -97,7 +99,57 @@ public class ImportUdiseData {
             else if(ACTION_DOES_RAW_DATA_EXISTS_IN_DATABASE.equals(action)){
                 handleActionDoesRawDataExistInDatabase(context);
             }
+
+            else if(ACTION_DETERMINE_USER_TYPE.equals(action)){
+                handleActionDetermineUserType(context);
+            }
         }
+    }
+
+    /**
+     * This method determines the usertype on a background thread and stores
+     * it in the preferences so that main activity can read it and show the
+     * user type in the navigation drawer
+     * @param context
+     */
+
+    private static void handleActionDetermineUserType(Context context){
+        String userTypeString = "Unknown User";
+        String userTypeSubtitle = "Unknown Office";
+        UdiseDbHelper udiseDbHelper = new UdiseDbHelper(context);
+        UserDataModel userDataModel;
+        userDataModel = udiseDbHelper.determineUserTypeAndDataModel(context);
+        switch(userDataModel.getUserType()){
+            case UserDataModel.USER_TYPE_NATIONAL:
+                userTypeString = "National User";
+                userTypeSubtitle = "Total States: " + userDataModel.getStatesList().size();
+                break;
+
+            case UserDataModel.USER_TYPE_STATE:
+                userTypeString = userDataModel.getStatesList().get(0).getStateName();
+                userTypeSubtitle = "State User with " + userDataModel.getDistrictsList().size() + " Districts";
+                break;
+
+            case UserDataModel.USER_TYPE_DISTRICT:
+                userTypeString = "CEO " + userDataModel.getDistrictsList().get(0).getDistrictName();
+                userTypeSubtitle = "District User with " + userDataModel.getZoneList().size() + " Zones";
+                break;
+            case UserDataModel.USER_TYPE_ZONE:
+                userTypeString = "ZEO " + userDataModel.getZoneList().get(0).getZoneName();
+                userTypeSubtitle = "Zone Code: " + userDataModel.getZoneList().get(0).getZoneCode();
+                break;
+        }
+        SharedPreferences mPreferences;
+        String sharedPrefFile = SchoolReportsConstants.SHARED_PREFERENCES_FILE;
+        mPreferences = context.getSharedPreferences(sharedPrefFile,Context.MODE_PRIVATE);
+        SharedPreferences.Editor preferenceEditor = mPreferences.edit();
+        preferenceEditor.putString(SchoolReportsConstants.SHARED_PREFERENCES_NAVIGATION_DRAWER_USER_TYPE_STRING,userTypeString);
+        preferenceEditor.putString(SchoolReportsConstants.SHARED_PREFERENCES_NAVIGATION_DRAWER_SUBTITLE,userTypeSubtitle);
+        preferenceEditor.apply();
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(ACTION_DETERMINE_USER_TYPE);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
+        Log.d(TAG,"Received request to determine userType, sending broadcast....");
     }
 
 
@@ -237,7 +289,7 @@ public class ImportUdiseData {
          */
 
         SharedPreferences mPreferences;
-        String sharedPrefFile = "in.hulum.udise.sharedprefs";
+        String sharedPrefFile = SchoolReportsConstants.SHARED_PREFERENCES_FILE;
         mPreferences = context.getSharedPreferences(sharedPrefFile,Context.MODE_PRIVATE);
 
         sendProgressBroadcast(context,ACTION_IMPORT_RAW_DATA,false,false,false,false,"Loading file, Please Wait...",0,UserDataModel.USER_TYPE_UNKNOWN);
@@ -564,16 +616,11 @@ public class ImportUdiseData {
             preferenceEditor.putInt(SHARED_PREFERENCES_KEY_PROGRESS,percentageCompleted);
             preferenceEditor.apply();
 
-            /*String[] projection = {UdiseContract.RawData.COLUMN_UDISE_SCHOOL_CODE};
-            Cursor returnedCursor = context.getContentResolver().query(UdiseContract.RawData.CONTENT_URI,projection,null,null,null);
-            Log.d(TAG,"Total records found is " + returnedCursor.getCount());
-            returnedCursor.close();*/
-
 
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InvalidFormatException e) {
-            Log.e(TAG,"Encountered invalid format!!!!!!!!!!!!");
+            Log.e(TAG,"Invalid Excel File Format Exception!");
             sendProgressBroadcast(context,ACTION_IMPORT_RAW_DATA,true,false,false,false,"The imported excel file does not contain UDISE data in a valid format. Please export the raw data to excel with headers and then save the file as XLS file using MS-Excel software",0,UserDataModel.USER_TYPE_UNKNOWN);
             notificationBuilder = notificationHelper.getNotificationWithAlerts(notificationTitle,"The imported excel file does not contain UDISE data in a valid format. Please export the raw data to excel with headers and then save the file as xls file using MS-Excel software");
             notificationHelper.getManager().notify(NOTIFICATION_ID,notificationBuilder.build());

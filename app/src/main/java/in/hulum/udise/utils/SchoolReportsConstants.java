@@ -5,6 +5,10 @@ package in.hulum.udise.utils;
  */
 
 public class SchoolReportsConstants {
+    public static final String SHARED_PREFERENCES_FILE = "in.hulum.udise.sharedprefs";
+    public static final String SHARED_PREFERENCES_NAVIGATION_DRAWER_USER_TYPE_STRING = "in.hulum.udise.sharedprefs.keys.USER_TYPE_STRING";
+    public static final String SHARED_PREFERENCES_NAVIGATION_DRAWER_SUBTITLE = "in.hulum.udise.sharedprefs.keys.DRAWER_SUBTITLE";
+
     public static final int MODEL_TYPE_NATIONAL = 100;
     public static final int MODEL_TYPE_STATE = 200;
     public static final int MODEL_TYPE_DISTRICT = 300;

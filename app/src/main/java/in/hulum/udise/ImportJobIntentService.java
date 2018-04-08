@@ -71,6 +71,19 @@ public class ImportJobIntentService extends JobIntentService {
     }
 
 
+    /**
+     * Starts this service to perform action DetermineUserType
+     * This helps to display proper user type in the navigation drawer
+     *
+     * @see JobIntentService
+     */
+    public static void startActionDetermineUserType(Context context) {
+        Intent intent = new Intent(context, ImportJobIntentService.class);
+        intent.setAction(ImportUdiseData.ACTION_DETERMINE_USER_TYPE);
+        enqueueWork(context,ImportJobIntentService.class,IMPORT_JOB_ID,intent);
+    }
+
+
 
     /**
      * Starts this service to perform action Baz with the given parameters. If
