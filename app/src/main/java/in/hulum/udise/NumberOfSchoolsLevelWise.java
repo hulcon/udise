@@ -153,6 +153,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
                 loaderId = ID_NUMBER_OF_SCHOOLS_STATE_WISE_LOADER;
                 getSupportActionBar().setTitle("State List");
                 getSupportActionBar().setSubtitle(academicYear);
+                fab.setVisibility(View.GONE);
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_DISTRICTWISE:
@@ -264,6 +265,9 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
                     getSupportActionBar().setTitle("Zone " + entityName);
                     getSupportActionBar().setSubtitle("Assembly Constituency-wise Summary List");
                     break;
+
+                default:
+                    throw new RuntimeException("Unsupported Assembly Constituency-wise Report in " + getLocalClassName());
             }
             Log.d(TAG,"Loader Id is " + loaderId + " and display level is " + displayReportLevel);
             getSupportLoaderManager().restartLoader(loaderId,args,NumberOfSchoolsLevelWise.this);
@@ -412,6 +416,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
                 break;
 
             case ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_STATE_LOADER:
+                Log.d(TAG,"Data length is " + data.getCount() + " and name is " + entityName);
                 List<ManagementWiseSchoolSummaryModel> assemblyConstituencyWiseListForState = SchoolReportsHelper.assemblyConstituencyWiseSummary(data,SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_STATE,entityName);
                 numberOfSchoolsSummaryAdapter.swapDataList(assemblyConstituencyWiseListForState);
                 break;
@@ -519,6 +524,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_INVALID:
+                Log.e(TAG,"Invalid Report type!!!!!");
                 break;
         }
         Log.d(TAG,"You clicked it!!!!");

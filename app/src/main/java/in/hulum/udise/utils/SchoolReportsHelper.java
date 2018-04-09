@@ -22,6 +22,19 @@ public class  SchoolReportsHelper {
 
     private static final String TAG = "SchoolReportsHelper";
 
+    /**
+     * This method generates management-wise summary of a single assembly constituency.
+     * It is important to note that the summary generated is not of the whole assembly constituency.
+     * The summary is generated only for portion of the assembly constituency which is under the
+     * selected State,
+     * @param cursor
+     * @param entityCode
+     * @param entityName
+     * @param parentCode
+     * @param parentEntityType
+     * @return
+     */
+
 
     public static List<ManagementWiseSchoolSummaryModel> assemblyConstituencyManagementWiseSummary(Cursor cursor,String entityCode,String entityName,String parentCode,int parentEntityType){
 
@@ -61,6 +74,9 @@ public class  SchoolReportsHelper {
                 parentEntityName = cursor.getString(indexParentEntityName) + " Zone";
                 Log.d(TAG,"parent name for zone is " + parentEntityName);
                 break;
+
+            default:
+                Log.e(TAG,"parentEntityType " + parentEntityType + " not implemented yet in assembly constitution management-wise summary");
         }
 
 
@@ -243,6 +259,9 @@ public class  SchoolReportsHelper {
                     assemblyConstituencySummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_ZONE);
                     assemblyConstituencySummaryModel.setExtraPayLoad(parentCode);
                     break;
+
+                default:
+                    Log.e(TAG,"Unknown Assembly Constituency-wise report with report code " + parentEntityStateDistrictOrZone);
             }
 
             assemblyConstituencySummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_ASSEMBLY_CONSTITUENCY_SUMMARY);
