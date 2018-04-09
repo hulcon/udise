@@ -10,6 +10,13 @@ public class ManagementWiseSchoolSummaryModel {
     private String code;
     private String name;
 
+    /*
+     * This variable is used for storing code of
+     * parent state,district or zone in case of
+     * assembly constituency model
+     */
+    private String extraPayLoad;
+
     private int modelType;
     private String managementNameOrSummaryHeading;
     private int primarySchools;
@@ -104,5 +111,13 @@ public class ManagementWiseSchoolSummaryModel {
 
     public void incrementHigherSecondarySchools(){
         this.higherSecondarySchools = this.higherSecondarySchools + 1;
+    }
+
+    public String getExtraPayLoad() {
+        return extraPayLoad;
+    }
+
+    public void setExtraPayLoad(String extraPayLoad) {
+        this.extraPayLoad = extraPayLoad;
     }
 }

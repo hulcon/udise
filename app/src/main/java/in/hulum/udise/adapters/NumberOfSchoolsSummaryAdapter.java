@@ -64,7 +64,7 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
      * The interface that receives onClick messages
      */
     public interface NumberOfSchoolsSummaryAdapterOnClickHandler {
-        void onClick(int reportDisplayLevel, String zoneDistrictOrStateCode, String zoneDistrictOrStateName);
+        void onClick(int reportDisplayLevel, String zoneDistrictOrStateCode, String zoneDistrictOrStateName,String parentCode);
     }
 
     private List<NumberOfSchoolsModel> numberOfSchoolsModelList;
@@ -223,10 +223,14 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
 
         @Override
         public void onClick(View v) {
+
             int adapterPosition = getAdapterPosition();
             int model = mSchoolSummaryList.get(adapterPosition).getModelType();
+
             String code = null;
             String name = null;
+            String parentCode = null;
+
             int reportDisplayLevel;
             switch (model){
                 case SchoolReportsConstants.MODEL_TYPE_NATIONAL:
@@ -286,12 +290,36 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
                     name = mSchoolSummaryList.get(adapterPosition).getName();
                     break;
 
+                case SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_STATE:
+                    reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_STATE;
+                    code = mSchoolSummaryList.get(adapterPosition).getCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
+                    parentCode = mSchoolSummaryList.get(adapterPosition).getExtraPayLoad();
+                    Log.d(TAG,"Assem Code " + code + " Assem name " + name);
+                    break;
+
+                case SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_DISTRICT:
+                    reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_DISTRICT;
+                    code = mSchoolSummaryList.get(adapterPosition).getCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
+                    parentCode = mSchoolSummaryList.get(adapterPosition).getExtraPayLoad();
+                    Log.d(TAG,"Assem Code " + code + " Assem name " + name);
+                    break;
+
+                case SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_ZONE:
+                    reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_ZONE;
+                    code = mSchoolSummaryList.get(adapterPosition).getCode();
+                    name = mSchoolSummaryList.get(adapterPosition).getName();
+                    parentCode = mSchoolSummaryList.get(adapterPosition).getExtraPayLoad();
+                    Log.d(TAG,"Assem Code " + code + " Assem name " + name);
+                    break;
+
                 default:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_INVALID;
 
             }
             Log.d(TAG,"Generated request for report level " + reportDisplayLevel);
-            mClickHandler.onClick(reportDisplayLevel,code,name);
+            mClickHandler.onClick(reportDisplayLevel,code,name,parentCode);
         }
     }
 }

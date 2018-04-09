@@ -2,6 +2,7 @@ package in.hulum.udise;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,6 +26,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,13 +46,16 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
     private static final String TAG = "NumOfSchoolsLevelWise";
 
 
-    private String stateName;
+   /* private String stateName;
     private String districtCode;
     private String districtName;
     private String zoneCode;
     private String zoneName;
     private String clusterCode;
-    private String clusterName;
+    private String clusterName;*/
+
+   private String entityCode;
+   private String entityName;
 
     private String academicYear;
 
@@ -64,10 +69,14 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
     private static final int ID_NUMBER_OF_SCHOOLS_DISTRICT_WISE_LOADER = 120;
     private static final int ID_NUMBER_OF_SCHOOLS_ZONE_WISE_LOADER = 130;
     private static final int ID_NUMBER_OF_SCHOOLS_CLUSTER_WISE_LOADER = 140;
+    private static final int ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_STATE_LOADER = 150;
+    private static final int ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_DISTRICT_LOADER = 160;
+    private static final int ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_ZONE_LOADER = 170;
 
     private NumberOfSchoolsSummaryAdapter numberOfSchoolsSummaryAdapter;
     private RecyclerView mRecyclerView;
     private int mPosition = RecyclerView.NO_POSITION;
+    private  boolean isAssemblyConstituencyWiseList;
 
 
     @Override
@@ -75,6 +84,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_number_of_schools);//activity_number_of_schools_level_wise);
         Toolbar toolbar = findViewById(R.id.toolbar);
+
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -85,8 +95,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                handleAssemblyConstituencyWiseList(view);
             }
         });
 
@@ -94,6 +103,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
         spinnerAcademicYears.setVisibility(View.GONE);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
 
+        isAssemblyConstituencyWiseList = false;
         academicYear = getIntent().getStringExtra(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR);
         displayReportLevel = getIntent().getIntExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_LEVEL_WISE_TYPE,SchoolReportsConstants.REPORT_DISPLAY_INVALID);
 
@@ -107,10 +117,10 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
          * So we will copy it to all
          * Later we can determine the type by the variable displaySummaryFor
          */
-        stateName = getIntent().getStringExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER);
-        districtName = stateName;
+        entityName = getIntent().getStringExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER);
+        /*districtName = stateName;
         zoneName = stateName;
-        clusterName = stateName;
+        clusterName = stateName;*/
         /*
          * The intent will contain ONLY ONE of the following:
          * - District code
@@ -119,10 +129,10 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
          * So we will copy it to all
          * Later we can determine the type by the variable displaySummaryFor
          */
-        districtCode = getIntent().getStringExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER);
-        zoneCode = districtCode;
+        entityCode = getIntent().getStringExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER);
+        /*zoneCode = districtCode;
         clusterCode = districtCode;
-        Log.d(TAG,"Levelwise code is " + districtCode + " and name is " + districtName);
+        */Log.d(TAG,"Levelwise code is " + entityCode + " and name is " + entityName);
 
         mRecyclerView = findViewById(R.id.recyclerview_summary_managementwise_number_of_schools);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false);
@@ -146,31 +156,118 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_DISTRICTWISE:
-                arguments.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,stateName);
+                arguments.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,entityName);
                 loaderId = ID_NUMBER_OF_SCHOOLS_DISTRICT_WISE_LOADER;
-                getSupportActionBar().setTitle(stateName);
+                getSupportActionBar().setTitle(entityName);
                 getSupportActionBar().setSubtitle("District-wise Summary List");
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_ZONEWISE:
-                arguments.putString(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,districtCode);
-                arguments.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,districtName);
+                arguments.putString(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,entityCode);
+                arguments.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,entityName);
                 loaderId = ID_NUMBER_OF_SCHOOLS_ZONE_WISE_LOADER;
-                getSupportActionBar().setTitle(districtName + " - " + districtCode);
+                getSupportActionBar().setTitle(entityName + " - " + entityCode);
                 getSupportActionBar().setSubtitle("Zone-wise Summary List");
                 break;
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_CLUSTERWISE:
-                arguments.putString(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,zoneCode);
-                arguments.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneName);
+                arguments.putString(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,entityCode);
+                arguments.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,entityName);
                 loaderId = ID_NUMBER_OF_SCHOOLS_CLUSTER_WISE_LOADER;
-                getSupportActionBar().setTitle(zoneName + " - " + zoneCode);
+                getSupportActionBar().setTitle(entityName + " - " + entityCode);
                 getSupportActionBar().setSubtitle("Cluster-wise Summary List");
-                Log.d(TAG,"Switchcase for clusterwise activated with zone name " + zoneName);
+                Log.d(TAG,"Switchcase for clusterwise activated with zone name " + entityName);
                 break;
         }
 
         getSupportLoaderManager().initLoader(loaderId,arguments,this);
+    }
+
+    public void handleAssemblyConstituencyWiseList(View view){
+        Bundle args = new Bundle();
+        if(isAssemblyConstituencyWiseList) {
+            isAssemblyConstituencyWiseList = false;
+            FloatingActionButton fab = findViewById(R.id.fab);
+            fab.setImageResource(R.drawable.ic_assembly_constituency);
+            switch(displayReportLevel){
+                case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_STATEWISE:
+                /*
+                 * No code is required for state-wise list
+                 * Simply generate a list of all the states
+                 * present in the database
+                 */
+                    loaderId = ID_NUMBER_OF_SCHOOLS_STATE_WISE_LOADER;
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                    getSupportActionBar().setTitle("State List");
+                    getSupportActionBar().setSubtitle(academicYear);
+                    break;
+
+                case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_DISTRICTWISE:
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,entityName);
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                    loaderId = ID_NUMBER_OF_SCHOOLS_DISTRICT_WISE_LOADER;
+                    getSupportActionBar().setTitle(entityName);
+                    getSupportActionBar().setSubtitle("District-wise Summary List");
+                    break;
+
+                case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_ZONEWISE:
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,entityCode);
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,entityName);
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                    loaderId = ID_NUMBER_OF_SCHOOLS_ZONE_WISE_LOADER;
+                    getSupportActionBar().setTitle(entityName + " - " + entityCode);
+                    getSupportActionBar().setSubtitle("Zone-wise Summary List");
+                    break;
+
+                case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_CLUSTERWISE:
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,entityCode);
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,entityName);
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                    loaderId = ID_NUMBER_OF_SCHOOLS_CLUSTER_WISE_LOADER;
+                    getSupportActionBar().setTitle(entityName + " - " + entityCode);
+                    getSupportActionBar().setSubtitle("Cluster-wise Summary List");
+                    break;
+            }
+            getSupportLoaderManager().restartLoader(loaderId,args,NumberOfSchoolsLevelWise.this);
+           /* Snackbar.make(view, "You are now viewing level-wise List", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();*/
+        }
+        else {
+            isAssemblyConstituencyWiseList = true;
+            FloatingActionButton fab = findViewById(R.id.fab);
+            fab.setImageResource(R.drawable.ic_zone);
+            /*Snackbar.make(view, "You are viewing now viewing Assembly Constituency-wise list " + displayReportLevel, Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();*/
+            switch (displayReportLevel){
+                case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_DISTRICTWISE:
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,entityName);
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                    loaderId = ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_STATE_LOADER;
+                    getSupportActionBar().setTitle(entityName + " State");
+                    getSupportActionBar().setSubtitle("Assembly Constituency-wise Summary List");
+                    break;
+
+                case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_ZONEWISE:
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,entityName);
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,entityCode);
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                    loaderId = ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_DISTRICT_LOADER;
+                    getSupportActionBar().setTitle("District " + entityName);
+                    getSupportActionBar().setSubtitle("Assembly Constituency-wise Summary List");
+                    break;
+
+                case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_CLUSTERWISE:
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,entityName);
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,entityCode);
+                    args.putString(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                    loaderId = ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_ZONE_LOADER;
+                    getSupportActionBar().setTitle("Zone " + entityName);
+                    getSupportActionBar().setSubtitle("Assembly Constituency-wise Summary List");
+                    break;
+            }
+            Log.d(TAG,"Loader Id is " + loaderId + " and display level is " + displayReportLevel);
+            getSupportLoaderManager().restartLoader(loaderId,args,NumberOfSchoolsLevelWise.this);
+        }
     }
 
     @Override
@@ -236,8 +333,49 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
                 String selectionStringZone = UdiseContract.RawData.COLUMN_ZONE_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsZone = {code, acYear};
-                Log.d(TAG, "Case activated for Loader with " + code + " year " + acYear);
                 return new CursorLoader(this,udiseSchoolsZoneUri,projectionZone,selectionStringZone,selectionArgumentsZone,null);
+
+            case ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_STATE_LOADER:
+                Uri udiseSchoolsStateAssemblyConstituencyUri = UdiseContract.RawData.CONTENT_URI;
+                String[] projectionStateAssemblyConstituency = {
+                        UdiseContract.RawData.COLUMN_UDISE_SCHOOL_CODE,
+                        UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE,
+                        UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_NAME,
+                        UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
+                };
+
+                String selectionStringStateAssemblyConstituency = UdiseContract.RawData.COLUMN_STATE_NAME + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+
+                String[] selectionArgumentsStateAssemblyConstituency = {name, acYear};
+                return new CursorLoader(this,udiseSchoolsStateAssemblyConstituencyUri,projectionStateAssemblyConstituency,selectionStringStateAssemblyConstituency,selectionArgumentsStateAssemblyConstituency,null);
+
+            case ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_DISTRICT_LOADER:
+                Uri udiseSchoolsDistrictAssemblyConstituencyUri = UdiseContract.RawData.CONTENT_URI;
+                String[] projectionDistrictAssemblyConstituency = {
+                        UdiseContract.RawData.COLUMN_UDISE_SCHOOL_CODE,
+                        UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE,
+                        UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_NAME,
+                        UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
+                };
+
+                String selectionStringDistrictAssemblyConstituency = UdiseContract.RawData.COLUMN_DISTRICT_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+
+                String[] selectionArgumentsDistrictAssemblyConstituency = {code, acYear};
+                return new CursorLoader(this,udiseSchoolsDistrictAssemblyConstituencyUri,projectionDistrictAssemblyConstituency,selectionStringDistrictAssemblyConstituency,selectionArgumentsDistrictAssemblyConstituency,null);
+
+            case ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_ZONE_LOADER:
+                Uri udiseSchoolsZoneAssemblyConstituencyUri = UdiseContract.RawData.CONTENT_URI;
+                String[] projectionZoneAssemblyConstituency = {
+                        UdiseContract.RawData.COLUMN_UDISE_SCHOOL_CODE,
+                        UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE,
+                        UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_NAME,
+                        UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
+                };
+
+                String selectionStringZoneAssemblyConstituency = UdiseContract.RawData.COLUMN_ZONE_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+
+                String[] selectionArgumentsZoneAssemblyConstituency = {code, acYear};
+                return new CursorLoader(this,udiseSchoolsZoneAssemblyConstituencyUri,projectionZoneAssemblyConstituency,selectionStringZoneAssemblyConstituency,selectionArgumentsZoneAssemblyConstituency,null);
 
             default:
                 throw new RuntimeException("Loader not Implemented: " + id);
@@ -271,11 +409,19 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
             case ID_NUMBER_OF_SCHOOLS_CLUSTER_WISE_LOADER:
                 List<ManagementWiseSchoolSummaryModel> clusterWiseList = SchoolReportsHelper.clusterWiseSummary(data);
                 numberOfSchoolsSummaryAdapter.swapDataList(clusterWiseList);
-                if(clusterWiseList.size()<1){
-                    Log.e(TAG,"Loader finished but empty!!!!");
-                } else {
-                    Log.d(TAG,"Loader finished with clusters " + clusterWiseList.size());
-                }
+                break;
+
+            case ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_STATE_LOADER:
+                List<ManagementWiseSchoolSummaryModel> assemblyConstituencyWiseListForState = SchoolReportsHelper.assemblyConstituencyWiseSummary(data,SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_STATE,entityName);
+                numberOfSchoolsSummaryAdapter.swapDataList(assemblyConstituencyWiseListForState);
+                break;
+            case ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_DISTRICT_LOADER:
+                List<ManagementWiseSchoolSummaryModel> assemblyConstituencyWiseListForDistrict = SchoolReportsHelper.assemblyConstituencyWiseSummary(data,SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_DISTRICT,entityCode);
+                numberOfSchoolsSummaryAdapter.swapDataList(assemblyConstituencyWiseListForDistrict);
+                break;
+            case ID_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_WISE_FOR_ZONE_LOADER:
+                List<ManagementWiseSchoolSummaryModel> assemblyConstituencyWiseListForZone = SchoolReportsHelper.assemblyConstituencyWiseSummary(data,SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_ZONE,entityCode);
+                numberOfSchoolsSummaryAdapter.swapDataList(assemblyConstituencyWiseListForZone);
                 break;
 
             default:
@@ -294,7 +440,7 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
     }
 
     @Override
-    public void onClick(int reportDisplayLevel, String zoneDistrictOrStateCode, String zoneDistrictOrStateName) {
+    public void onClick(int reportDisplayLevel, String zoneDistrictOrStateCode, String zoneDistrictOrStateName, String parentCode) {
         Intent intent;
         Log.d(TAG,"Report level finalised in level-wise touch is " + reportDisplayLevel + " code is " + zoneDistrictOrStateCode + " and name is " + zoneDistrictOrStateName);
 
@@ -339,6 +485,36 @@ public class NumberOfSchoolsLevelWise extends AppCompatActivity implements
                 intent.putExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateCode);
                 intent.putExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateName);
                 intent.putExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_SUMMARY_TYPE,SchoolReportsConstants.REPORT_DISPLAY_CLUSTER_SUMMARY);
+                startActivity(intent);
+                break;
+
+            case SchoolReportsConstants.REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_STATE:
+                intent = new Intent(this,NumberOfSchools.class);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateCode);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateName);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_PARENT_STATE_DISTRICT_OR_ZONE_CODE,parentCode);
+                intent.putExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_SUMMARY_TYPE,SchoolReportsConstants.REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_STATE);
+                startActivity(intent);
+                break;
+
+            case SchoolReportsConstants.REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_DISTRICT:
+                intent = new Intent(this,NumberOfSchools.class);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateCode);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateName);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_PARENT_STATE_DISTRICT_OR_ZONE_CODE,parentCode);
+                intent.putExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_SUMMARY_TYPE,SchoolReportsConstants.REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_DISTRICT);
+                startActivity(intent);
+                break;
+
+            case SchoolReportsConstants.REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_ZONE:
+                intent = new Intent(this,NumberOfSchools.class);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateCode);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateName);
+                intent.putExtra(SchoolReportsConstants.EXTRA_KEY_PARENT_STATE_DISTRICT_OR_ZONE_CODE,parentCode);
+                intent.putExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_SUMMARY_TYPE,SchoolReportsConstants.REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_ZONE);
                 startActivity(intent);
                 break;
 

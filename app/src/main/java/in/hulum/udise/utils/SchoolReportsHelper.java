@@ -22,6 +22,275 @@ public class  SchoolReportsHelper {
 
     private static final String TAG = "SchoolReportsHelper";
 
+
+    public static List<ManagementWiseSchoolSummaryModel> assemblyConstituencyManagementWiseSummary(Cursor cursor,String entityCode,String entityName,String parentCode,int parentEntityType){
+
+        if(cursor==null){
+            return null;
+        }
+
+        List<ManagementWiseSchoolSummaryModel> assemblyConstituencySummaryList = new ArrayList<>();
+
+        Set<String> schoolManagementSet = new HashSet<String>();
+        ArrayList<ContentValues> managementInfoList = new ArrayList<ContentValues>();
+
+        String parentEntityName = null;
+
+        cursor.moveToFirst();
+
+        int indexColumnSchoolManagementCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT);
+        int indexColumnSchoolManagementDescription = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION);
+        int indexColumnSchoolCategoryCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY);
+        int indexParentEntityName;
+        switch (parentEntityType){
+            case SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_STATE:
+                indexParentEntityName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_STATE_NAME);
+                Log.d(TAG,"parent index for state is " + indexParentEntityName);
+                parentEntityName = cursor.getString(indexParentEntityName) + " State";
+                break;
+
+            case SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_DISTRICT:
+                indexParentEntityName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_DISTRICT_NAME);
+                Log.d(TAG,"parent index for district is " + indexParentEntityName);
+                parentEntityName = cursor.getString(indexParentEntityName) + " District";
+                break;
+
+            case SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_ZONE:
+                indexParentEntityName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_ZONE_NAME);
+                Log.d(TAG,"parent index for zone is " + indexParentEntityName);
+                parentEntityName = cursor.getString(indexParentEntityName) + " Zone";
+                Log.d(TAG,"parent name for zone is " + parentEntityName);
+                break;
+        }
+
+
+        ManagementWiseSchoolSummaryModel assemblyConstituencySummary = new ManagementWiseSchoolSummaryModel();
+        assemblyConstituencySummary.setModelType(SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY);
+        assemblyConstituencySummary.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_ASSEMBLY_CONSTITUENCY_SUMMARY);
+        assemblyConstituencySummary.setManagementNameOrSummaryHeading("Assembly Constituency " + entityName + " [Area Under " + parentEntityName + "]");
+        assemblyConstituencySummary.setName(entityName);
+        assemblyConstituencySummary.setCode(entityCode);
+        assemblyConstituencySummary.setExtraPayLoad(parentCode);
+
+
+            /*
+             * Iterate over all the rows of the cursor and
+             * Create a list of distinct value of school managements
+             */
+        for(int index=0;index<cursor.getCount();index++) {
+            cursor.moveToPosition(index);
+            /*
+             * Try adding school management values to the Set and
+             * check if it succeeds. If the set accepts it (returns true) then it
+             * is a distinct value. So store it in a Content Value List for later use.
+             */
+            if(schoolManagementSet.add(cursor.getString(indexColumnSchoolManagementDescription))){
+                ContentValues managementInfo = new ContentValues();
+                managementInfo.put(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT,cursor.getInt(indexColumnSchoolManagementCode));
+                managementInfo.put(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION,cursor.getString(indexColumnSchoolManagementDescription));
+                /*Add the above value to an array list*/
+                managementInfoList.add(managementInfo);
+            }
+
+            /*
+             * Count the number of each category of schools for
+             * assembly constituency
+             */
+
+            switch (determineSchoolType(cursor.getInt(indexColumnSchoolCategoryCode))){
+                case SchoolReportsConstants.PRIMARY_SCHOOL:
+                    assemblyConstituencySummary.incrementPrimarySchools();
+                    break;
+                case SchoolReportsConstants.MIDDLE_SCHOOL:
+                    assemblyConstituencySummary.incrementMiddleSchools();
+                    break;
+                case SchoolReportsConstants.HIGH_SCHOOL:
+                    assemblyConstituencySummary.incrementHighSchools();
+                    break;
+                case SchoolReportsConstants.HIGHER_SECONDARY_SCHOOL:
+                    assemblyConstituencySummary.incrementHigherSecondarySchools();
+                    break;
+            }
+        }
+
+        /*
+         * Assembly Constituency summary is created. Make it the first item in the list
+         */
+        assemblyConstituencySummaryList.add(assemblyConstituencySummary);
+
+        /*
+         * Here we will count the number of primary, middle, high and higher secondary schools
+         * for each management
+         */
+        for(int mgmtCounter=0;mgmtCounter<managementInfoList.size();mgmtCounter++){
+            ManagementWiseSchoolSummaryModel managementWiseSchoolSummaryModel = new ManagementWiseSchoolSummaryModel();
+            managementWiseSchoolSummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY);
+            managementWiseSchoolSummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_MANAGEMENT_DETAIL);
+            assemblyConstituencySummary.setName(entityName);
+            assemblyConstituencySummary.setCode(entityCode);
+            assemblyConstituencySummary.setExtraPayLoad(parentCode);
+
+            managementWiseSchoolSummaryModel.setManagementNameOrSummaryHeading(managementInfoList.get(mgmtCounter).getAsString(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION));
+
+            for(int cursorRow=0;cursorRow<cursor.getCount();cursorRow++){
+
+                cursor.moveToPosition(cursorRow);
+                if(cursor.getInt(indexColumnSchoolManagementCode)==managementInfoList.get(mgmtCounter).getAsInteger(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT)){
+                    int schoolType = determineSchoolType(cursor.getInt(indexColumnSchoolCategoryCode));
+                    switch (schoolType){
+                        case SchoolReportsConstants.PRIMARY_SCHOOL:
+                            managementWiseSchoolSummaryModel.incrementPrimarySchools();
+                            break;
+                        case SchoolReportsConstants.MIDDLE_SCHOOL:
+                            managementWiseSchoolSummaryModel.incrementMiddleSchools();
+                            break;
+                        case SchoolReportsConstants.HIGH_SCHOOL:
+                            managementWiseSchoolSummaryModel.incrementHighSchools();
+                            break;
+                        case SchoolReportsConstants.HIGHER_SECONDARY_SCHOOL:
+                            managementWiseSchoolSummaryModel.incrementHigherSecondarySchools();
+                            break;
+                    }
+                }
+            }
+            /*
+             * Add this management to list if and only if there are any schools of this management type
+             * Otherwise just ignore this management type
+             */
+            if(managementWiseSchoolSummaryModel.getPrimarySchools()>0 || managementWiseSchoolSummaryModel.getMiddleSchools()>0 || managementWiseSchoolSummaryModel.getHighSchools()>0 || managementWiseSchoolSummaryModel.getHigherSecondarySchools()>0){
+                assemblyConstituencySummaryList.add(managementWiseSchoolSummaryModel);
+                Log.d(TAG,"Entry Added!!");
+            }
+        }
+        return assemblyConstituencySummaryList;
+    }
+
+
+
+    /**
+     * This method generates assembly constituency wise list containing number of schools.
+     * @param cursor cursor containing schools of the desired constituency under desired
+     *               state, district or zone
+     * @param parentEntityStateDistrictOrZone type of the parent entity i.e., one of the
+     *                                        types:
+     *                                        - SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_STATE
+     *                                        - SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_DISTRICT
+     *                                        - SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_ZONE
+     *
+     * @param parentCode Udise code of the parent State, District or
+     *                   Zone for the assembly constituency
+     * @return a list of type {@link ManagementWiseSchoolSummaryModel}, one per each assembly constituency
+     *
+     * NOTE: Although 'management' has nothing to do with this method as we are just generating
+     * a list of assembly constituencies along with the number of schools in each state, i am using the same model
+     * {@link ManagementWiseSchoolSummaryModel} just to keep things simple without creating
+     * too many models.
+     */
+    public static List<ManagementWiseSchoolSummaryModel> assemblyConstituencyWiseSummary(Cursor cursor,int parentEntityStateDistrictOrZone,String parentCode){
+
+        if(cursor==null){
+            return null;
+        }
+
+        List<ManagementWiseSchoolSummaryModel> assemblyConstituencyWiseSummaryList = new ArrayList<>();
+
+        Set<String> uniqueAssemblyConstituencyCodesSet = new HashSet<String>();
+        ArrayList<ContentValues> assemblyConstituencyInfoList = new ArrayList<ContentValues>();
+
+        int indexColumnAssemblyConstituencyName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_NAME);
+        int indexColumnAssemblyConstituencyCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE);
+        int indexColumnSchoolCategoryCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY);
+
+            /*
+             * Iterate over all the rows of the cursor and
+             * Create a list of distinct value of assembly
+             * constituency codes
+             */
+        for(int index=0;index<cursor.getCount();index++) {
+            cursor.moveToPosition(index);
+            /*
+             * Create a list of unique assembly constituencies found in the database
+             */
+            if(uniqueAssemblyConstituencyCodesSet.add(cursor.getString(indexColumnAssemblyConstituencyCode))){
+                ContentValues assemblyConstituencyInfo = new ContentValues();
+                assemblyConstituencyInfo.put(UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE,cursor.getString(indexColumnAssemblyConstituencyCode));
+                assemblyConstituencyInfo.put(UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_NAME,cursor.getString(indexColumnAssemblyConstituencyName));
+                assemblyConstituencyInfoList.add(assemblyConstituencyInfo);
+            }
+        }
+        Log.e(TAG,"Total Constituencies found is " + assemblyConstituencyInfoList.size());
+
+
+        /*
+         * Here we will count the number of primary, middle, high and higher secondary schools
+         * for each State
+         */
+        for(int assemblyConstituencyCounter=0;assemblyConstituencyCounter<assemblyConstituencyInfoList.size();assemblyConstituencyCounter++){
+            ManagementWiseSchoolSummaryModel assemblyConstituencySummaryModel = new ManagementWiseSchoolSummaryModel();
+
+            switch(parentEntityStateDistrictOrZone){
+                case SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_STATE:
+                    assemblyConstituencySummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_STATE);
+                    assemblyConstituencySummaryModel.setExtraPayLoad(parentCode);
+                    break;
+
+                case SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_DISTRICT:
+                    assemblyConstituencySummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_DISTRICT);
+                    assemblyConstituencySummaryModel.setExtraPayLoad(parentCode);
+                    break;
+
+                case SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_ZONE:
+                    assemblyConstituencySummaryModel.setModelType(SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_ZONE);
+                    assemblyConstituencySummaryModel.setExtraPayLoad(parentCode);
+                    break;
+            }
+
+            assemblyConstituencySummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_ASSEMBLY_CONSTITUENCY_SUMMARY);
+
+            String currentAssemblyConstituencyCode = assemblyConstituencyInfoList.get(assemblyConstituencyCounter).getAsString(UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE);
+            String currentAssemblyConstituencyName = assemblyConstituencyInfoList.get(assemblyConstituencyCounter).getAsString(UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_NAME);
+            assemblyConstituencySummaryModel.setCode(currentAssemblyConstituencyCode);
+            assemblyConstituencySummaryModel.setName(currentAssemblyConstituencyName);
+
+            assemblyConstituencySummaryModel.setManagementNameOrSummaryHeading("Assembly Constituency " + currentAssemblyConstituencyName);
+
+            for(int cursorRow=0;cursorRow<cursor.getCount();cursorRow++){
+
+                cursor.moveToPosition(cursorRow);
+                if(cursor.getString(indexColumnAssemblyConstituencyCode).equals(currentAssemblyConstituencyCode)){
+                    int schoolType = determineSchoolType(cursor.getInt(indexColumnSchoolCategoryCode));
+                    switch (schoolType){
+                        case SchoolReportsConstants.PRIMARY_SCHOOL:
+                            assemblyConstituencySummaryModel.incrementPrimarySchools();
+                            break;
+                        case SchoolReportsConstants.MIDDLE_SCHOOL:
+                            assemblyConstituencySummaryModel.incrementMiddleSchools();
+                            break;
+                        case SchoolReportsConstants.HIGH_SCHOOL:
+                            assemblyConstituencySummaryModel.incrementHighSchools();
+                            break;
+                        case SchoolReportsConstants.HIGHER_SECONDARY_SCHOOL:
+                            assemblyConstituencySummaryModel.incrementHigherSecondarySchools();
+                            break;
+                    }
+                }
+            }
+            /*
+             * Add this state to the list if and only if there are any schools in this state
+             * Otherwise just ignore it
+             */
+            if(assemblyConstituencySummaryModel.getPrimarySchools()>0 || assemblyConstituencySummaryModel.getMiddleSchools()>0 || assemblyConstituencySummaryModel.getHighSchools()>0 || assemblyConstituencySummaryModel.getHigherSecondarySchools()>0){
+                assemblyConstituencyWiseSummaryList.add(assemblyConstituencySummaryModel);
+                Log.d(TAG,"Entry Added!!");
+            }
+        }
+        return assemblyConstituencyWiseSummaryList;
+    }
+
+
+
+
+
     /**
      * This method generates a list of states along with the number of schools in each state
      * in a list of type {@link ManagementWiseSchoolSummaryModel}
