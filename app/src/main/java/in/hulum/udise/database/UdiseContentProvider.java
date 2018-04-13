@@ -82,7 +82,7 @@ public class UdiseContentProvider extends ContentProvider {
                 break;
 
             default:
-                //No other Uri has been implemented for insert operation
+                //No other Uri has been implemented for insert operation yet
                 //So other Uris should produce an exception
                 Log.e(TAG,"UriMatcher returned an unknown code: " + match);
                 throw new UnsupportedOperationException("Unknown Uri: " + uri);
@@ -149,6 +149,10 @@ public class UdiseContentProvider extends ContentProvider {
                         null,
                         sortOrder);
                 break;
+
+            default:
+                Log.e(TAG,"Invalid Uri passed to query method of Content Provider. Uri is " + uri);
+                throw new IllegalArgumentException("Invalid Uri passed to query method of Content Provider. Uri:" + uri);
         }
 
         if (cursor != null) {
@@ -161,6 +165,6 @@ public class UdiseContentProvider extends ContentProvider {
     public int update(@NonNull Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
         // TODO: Implement this to handle requests to update one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+        throw new UnsupportedOperationException("Update method of Content Provider Not yet implemented");
     }
 }

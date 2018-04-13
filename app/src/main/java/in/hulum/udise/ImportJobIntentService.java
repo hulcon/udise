@@ -12,16 +12,17 @@ import static android.support.v4.app.JobIntentService.enqueueWork;
 /**
  * An {@link JobIntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
+ * This class has been upgraded and made Oreo compatible.
+ * This class now extends new {@link JobIntentService} found in Oreo.
+ *
  */
 public class ImportJobIntentService extends JobIntentService {
     public static final String TAG = ImportJobIntentService.class.getSimpleName();
 
     /*
      * Unique Job ID for this service
-     * This remains same for every action
+     * It can be anything but should
+     * remain same for every action
      */
     static final int IMPORT_JOB_ID = 1000;
 
@@ -39,38 +40,6 @@ public class ImportJobIntentService extends JobIntentService {
 
 
 
-
-    /**
-     * Starts this service to perform action Foo with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see JobIntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionFoo(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, ImportJobIntentService.class);
-        intent.setAction(ImportUdiseData.ACTION_FOO);
-        intent.putExtra(ImportUdiseData.EXTRA_PARAM1, param1);
-        intent.putExtra(ImportUdiseData.EXTRA_PARAM2, param2);
-        enqueueWork(context,ImportJobIntentService.class,IMPORT_JOB_ID,intent);
-    }
-
-
-    /**
-     * Starts this service to perform action Baz with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see JobIntentService
-     */
-    public static void startActionBaz(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, ImportJobIntentService.class);
-        intent.setAction(ImportUdiseData.ACTION_BAZ);
-        intent.putExtra(ImportUdiseData.EXTRA_PARAM1, param1);
-        intent.putExtra(ImportUdiseData.EXTRA_PARAM2, param2);
-        enqueueWork(context,ImportJobIntentService.class,IMPORT_JOB_ID,intent);
-    }
-
-
     /**
      * Starts this service to perform action DetermineUserType
      * This helps to display proper user type in the navigation drawer
@@ -86,7 +55,7 @@ public class ImportJobIntentService extends JobIntentService {
 
 
     /**
-     * Starts this service to perform action Baz with the given parameters. If
+     * Starts this service to perform action import raw data with the given parameters. If
      * the service is already performing a task this action will be queued.
      * @param context
      * @param uriParam Uri of the excel file to be imported
@@ -107,9 +76,15 @@ public class ImportJobIntentService extends JobIntentService {
      */
     public static void startActionDoesRawDataExistInDatabase(Context context){
         Intent intent = new Intent(context,ImportJobIntentService.class);
-        intent.setAction(ImportUdiseData.ACTION_DOES_RAW_DATA_EXISTS_IN_DATABASE);
+        intent.setAction(ImportUdiseData.ACTION_DOES_RAW_DATA_EXIST_IN_DATABASE);
         enqueueWork(context,ImportJobIntentService.class,IMPORT_JOB_ID,intent);
     }
+
+    /**
+     * Inherited method of this JObIntentService. This method is automatically invoked
+     * when the {@link JobIntentService#enqueueWork(Context, Class, int, Intent)} is
+     * called.
+     */
 
     @Override
     protected void onHandleWork(@NonNull Intent intent) {

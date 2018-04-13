@@ -11,14 +11,13 @@ import in.hulum.udise.R;
 
 /**
  * Created by Irshad on 18-03-2018.
+ * This fragment displays the UI for School Reports
  */
 
 public class SchoolReportsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.school_reports_main,container,false);
-        return rootView;
-        //super.onCreateView(inflater, container, savedInstanceState);
+        return inflater.inflate(R.layout.school_reports_main,container,false);
     }
 }

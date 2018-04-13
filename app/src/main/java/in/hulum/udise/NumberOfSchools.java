@@ -1,14 +1,15 @@
 package in.hulum.udise;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -18,9 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ProgressBar;
-import android.widget.RadioButton;
 import android.widget.Spinner;
 
 import java.util.ArrayList;
@@ -34,26 +33,35 @@ import in.hulum.udise.models.UserDataModel;
 import in.hulum.udise.utils.SchoolReportsConstants;
 import in.hulum.udise.utils.SchoolReportsHelper;
 
+/**
+ * Created by Irshad
+ *
+ * This Activity displays the number of schools summary
+ * management wise in a recycler view. The first item
+ * of the recycler view displays the summary of the whole
+ * Nation, State, District or Zone. The rest of the items
+ * in the recycler view display the management-wise summary,
+ * one item for each management type. On clicking any item,
+ * this activity launches another activity
+ * {@link NumberOfSchoolsLevelWise} which then displays the
+ * level-wise (State, District, Zone or Cluster -wise) details
+ */
+
 public class NumberOfSchools extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor>,
         NumberOfSchoolsSummaryAdapter.NumberOfSchoolsSummaryAdapterOnClickHandler{
 
     private static final String TAG = "NumberOfSchools";
 
-   /* Button buttonShowReport;
-    RadioButton radioButtonZoneWise;*/
-
-   /* private String stateName;
-    private String districtCode;
-    private String districtName;
-    private String zoneCode;
-    private String zoneName;
-    private String clusterCode;
-    private String clusterName;*/
-
     private String entityCode;
     private String entityName;
 
+    /*
+     * In case of a Constituency Assembly report, we need
+     * to know the udise code of the parent entity
+     * (State, District, or Zone) of that Constituency Assembly.
+     * This variable holds that.
+     */
     private String parentEntityCodeForAssemblyConstituency;
 
     private String academicYear;
@@ -62,10 +70,26 @@ public class NumberOfSchools extends AppCompatActivity implements
     private int displaySummaryFor;
 
     int loaderId;
+    /*
+     * Bundle for passing arguments to the loader
+     */
     Bundle arguments;
 
+    /*
+     * When this activity is first launched by clicking the
+     * "Number of Schools" button, i.e., if it is displaying
+     * the top-level management-wise report, it should display
+     * a spinner in the toolbar to select the desired academic
+     * year. But for subsequent deeper level reports (child reports),
+     * the spinner should be hidden and instead a title and a
+     * subtitle must be displayed. This variable is used to keep
+     * track of whether the spinner should be displayed or not.
+     */
     private boolean showTitleInsteadOfSpinner = false;
 
+    /*
+     * Various loader ids for corresponding types of reports required
+     */
     private static final int ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_NATIONAL_SUMMARY_LOADER = 1000;
     private static final int ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_STATE_SUMMARY_LOADER = 2000;
     private static final int ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_DISTRICT_SUMMARY_LOADER = 3000;
@@ -91,20 +115,29 @@ public class NumberOfSchools extends AppCompatActivity implements
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeButtonEnabled(true);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
+        /*
+         * Set up the support action bar.
+         * Enable the back button.
+         * Initially hide the title to make
+         * room for the spinner
+         */
+        ActionBar supportActionBar = getSupportActionBar();
+        if(supportActionBar != null){
+            supportActionBar.setDisplayHomeAsUpEnabled(true);
+            supportActionBar.setHomeButtonEnabled(true);
+            supportActionBar.setDisplayShowTitleEnabled(false);
+        }
 
+        /**
+         * This activity and the {@link NumberOfSchoolsLevelWise} use
+         * the same layout file. We need a floating action button in the
+         * {@link NumberOfSchoolsLevelWise} for toggling Assembly
+         * Constituency-wise view but we do not require that FAB in this
+         * activity. So we just hide that FAB in this activity.
+         */
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setVisibility(View.GONE);
-        /*fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
 
         Spinner spinnerAcademicYears = (Spinner)findViewById(R.id.spinner_academic_years);
         arguments = new Bundle();
@@ -119,7 +152,6 @@ public class NumberOfSchools extends AppCompatActivity implements
          */
         academicYear = getIntent().getStringExtra(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR);
         if(academicYear==null){
-            Log.e(TAG,"This is a root level report");
             UdiseDbHelper udiseDbHelper = new UdiseDbHelper(this);
             userDataModel = udiseDbHelper.determineUserTypeAndDataModel(this);
 
@@ -138,7 +170,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                         break;
                     case UserDataModel.USER_TYPE_STATE:
                         /*
-                         *
+                         * We only require state name in case of state summary
                          */
                         entityName = userDataModel.getStatesList().get(0).getStateName();
                         displaySummaryFor = SchoolReportsConstants.REPORT_DISPLAY_STATE_SUMMARY;
@@ -155,7 +187,8 @@ public class NumberOfSchools extends AppCompatActivity implements
                         break;
                     /*
                      * Cluster-level summary is not possible by directly invoking this
-                     * activity from the mainactivity. Cluster-level summary will be
+                     * activity from the mainactivity because we do not currently support
+                     * cluster-level users. Cluster-level summary will be
                      * possible only when this activity is called with proper extra
                      * data in its intent. The intent must contain code of
                      * REPORT_DISPLAY_CLUSTER_SUMMARY to display cluster level summary
@@ -166,6 +199,9 @@ public class NumberOfSchools extends AppCompatActivity implements
                 }
             }
 
+            /*
+             * Setup the spinner for displaying academic years.
+             */
             ArrayAdapter<String> adapterAcademicYears =
                     new ArrayAdapter<String>(this,R.layout.spinner_item_custom,academicYearsList);
             adapterAcademicYears.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -175,7 +211,12 @@ public class NumberOfSchools extends AppCompatActivity implements
                       @Override
                       public void onItemSelected(AdapterView<?> parentView,
                                                  View selectedItemView, int position, long id) {
-                          // Selected academic year in the spinner
+                          /*
+                           * On selecting a spinner item, we simply fetch the academic year
+                           * from the currently selected item and put that in a bundle as an
+                           * argument. We then restart the loader to load data for the
+                           * selected academic year.
+                           */
                           academicYear = parentView.getItemAtPosition(position).toString();
                           arguments.putString(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
                           getSupportLoaderManager().restartLoader(loaderId,arguments,NumberOfSchools.this);
@@ -187,11 +228,11 @@ public class NumberOfSchools extends AppCompatActivity implements
                   });
             academicYear = spinnerAcademicYears.getSelectedItem().toString();
         } else {
-            /*
-             * TODO: Handle this case if this is a child level report
+            /* This is a child-level report (deep-level report)
              * We need to get the data from the intent like ac_year and
              * district code (or similar things). Also the spinner needs
-             * to be disabled in that case
+             * to be disabled in this case. We will display title and
+             * subtitle in place of spinner
              */
             spinnerAcademicYears.setVisibility(View.GONE);
             showTitleInsteadOfSpinner = true;
@@ -221,13 +262,16 @@ public class NumberOfSchools extends AppCompatActivity implements
             entityCode = getIntent().getStringExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER);
 
             /*
-             * This extra parameter hold the code of parent state, district or zone in case
+             * This extra parameter holds the code of parent state, district or zone in case
              * of assembly constituency
              */
             parentEntityCodeForAssemblyConstituency = getIntent().getStringExtra(SchoolReportsConstants.EXTRA_KEY_PARENT_STATE_DISTRICT_OR_ZONE_CODE);
 
         }
 
+        /*
+         * Setup the recycler view
+         */
         mRecyclerView = findViewById(R.id.recyclerview_summary_managementwise_number_of_schools);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false);
         mRecyclerView.setLayoutManager(layoutManager);
@@ -351,7 +395,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                         UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
                 };
 
-                String selectionStringNational = UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+                String selectionStringNational = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsNational = {acYear};
                 return new CursorLoader(this,udiseSchoolsNationalUri,projectionNational,selectionStringNational,selectionArgumentsNational,null);
@@ -365,7 +409,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                         UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
                 };
 
-                String selectionStringState = UdiseContract.RawData.COLUMN_STATE_NAME + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+                String selectionStringState = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_STATE_NAME + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsState = {name, acYear};
                 return new CursorLoader(this,udiseSchoolsStateUri,projectionState,selectionStringState,selectionArgumentsState,null);
@@ -373,18 +417,14 @@ public class NumberOfSchools extends AppCompatActivity implements
 
             case ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_DISTRICT_SUMMARY_LOADER:
                 Uri udiseSchoolsDistrictUri = UdiseContract.RawData.CONTENT_URI;
-                //TODO: Need to clean this up. Perhaps the Zonecode and Zonename columns are unnecessary
-                //Need to check it!!!
                 String[] projectionDistrict = {
                         UdiseContract.RawData.COLUMN_UDISE_SCHOOL_CODE,
-                        //UdiseContract.RawData.COLUMN_ZONE_CODE,
-                        //UdiseContract.RawData.COLUMN_ZONE_NAME,
                         UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT,
                         UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION,
                         UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
                 };
 
-                String selectionStringDistrict = UdiseContract.RawData.COLUMN_DISTRICT_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+                String selectionStringDistrict = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_DISTRICT_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsDistrict = {code, acYear};
                 return new CursorLoader(this,udiseSchoolsDistrictUri,projectionDistrict,selectionStringDistrict,selectionArgumentsDistrict,null);
@@ -398,7 +438,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                         UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
                 };
 
-                String selectionStringZone = UdiseContract.RawData.COLUMN_ZONE_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+                String selectionStringZone = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_ZONE_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsZone = {code, acYear};
                 return new CursorLoader(this,udiseSchoolsZoneUri,projectionZone,selectionStringZone,selectionArgumentsZone,null);
@@ -412,7 +452,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                         UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
                 };
 
-                String selectionStringCluster = UdiseContract.RawData.COLUMN_CLUSTER_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+                String selectionStringCluster = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_CLUSTER_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsCluster = {code, acYear};
                 return new CursorLoader(this,udiseSchoolsClusterUri,projectionCluster,selectionStringCluster,selectionArgumentsCluster,null);
@@ -427,7 +467,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                         UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
                 };
 
-                String selectionStringAssemblyConstituencyForState = UdiseContract.RawData.COLUMN_STATE_NAME + " = ? and " + UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE + " = ? and "+ UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+                String selectionStringAssemblyConstituencyForState = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_STATE_NAME + " = ? and " + UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE + " = ? and "+ UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsAssemblyConstituencyForState = {parentCode, code, acYear};
                 return new CursorLoader(this,udiseSchoolsAssemblyConstituencyForStateUri,projectionAssemblyConstituencyForState,selectionStringAssemblyConstituencyForState,selectionArgumentsAssemblyConstituencyForState,null);
@@ -442,7 +482,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                         UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
                 };
 
-                String selectionStringAssemblyConstituencyForDistrict = UdiseContract.RawData.COLUMN_DISTRICT_CODE + " = ? and " + UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE + " = ? and "+ UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+                String selectionStringAssemblyConstituencyForDistrict = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_DISTRICT_CODE + " = ? and " + UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE + " = ? and "+ UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsAssemblyConstituencyForDistrict = {parentCode, code, acYear};
                 return new CursorLoader(this,udiseSchoolsAssemblyConstituencyForDistrictUri,projectionAssemblyConstituencyForDistrict,selectionStringAssemblyConstituencyForDistrict,selectionArgumentsAssemblyConstituencyForDistrict,null);
@@ -457,7 +497,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                         UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
                 };
 
-                String selectionStringAssemblyConstituencyForZone = UdiseContract.RawData.COLUMN_ZONE_CODE + " = ? and " + UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE + " = ? and "+ UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
+                String selectionStringAssemblyConstituencyForZone = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_ZONE_CODE + " = ? and " + UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE + " = ? and "+ UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsAssemblyConstituencyForZone = {parentCode, code, acYear};
                 return new CursorLoader(this,udiseSchoolsAssemblyConstituencyForZoneUri,projectionAssemblyConstituencyForZone,selectionStringAssemblyConstituencyForZone,selectionArgumentsAssemblyConstituencyForZone,null);
@@ -489,7 +529,6 @@ public class NumberOfSchools extends AppCompatActivity implements
 
             case ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_DISTRICT_SUMMARY_LOADER:
                 List<ManagementWiseSchoolSummaryModel> districtSummaryList = SchoolReportsHelper.districtManagementWiseSummary(data,entityCode,entityName);
-                Log.d(TAG,"Loader finished!! Items are " + districtSummaryList.size());
                 numberOfSchoolsSummaryAdapter.swapDataList(districtSummaryList);
                 break;
 
@@ -533,10 +572,26 @@ public class NumberOfSchools extends AppCompatActivity implements
         numberOfSchoolsSummaryAdapter.swapDataList(null);
     }
 
+
+    /**
+     * This method acts as a onClick handler for
+     * {@link NumberOfSchoolsSummaryAdapter#NumberOfSchoolsSummaryAdapter(Context, NumberOfSchoolsSummaryAdapter.NumberOfSchoolsSummaryAdapterOnClickHandler, boolean)}
+     * This method handles the actual clicks on the recycler view items. All the parameters are
+     * passed by the recyclerview adapter to this handler automatically through
+     * the interface implemented in that adapter.
+     *
+     * On click this method calls the {@link NumberOfSchoolsLevelWise} activity
+     * to display appropriate level-wise report.
+     * @param reportDisplayLevel desired level of report to be displayed on click
+     * @param zoneDistrictOrStateCode code of the current entity
+     *                                (State, District, Zone, Cluster or Assembly Constituency)
+     * @param zoneDistrictOrStateName name of the current entity
+     * @param parentCode code of the parent of the current entity
+     */
+
     @Override
     public void onClick(int reportDisplayLevel, String zoneDistrictOrStateCode, String zoneDistrictOrStateName,String parentCode) {
         Intent intent;
-        Log.d(TAG,"Report Request received with level " + reportDisplayLevel);
         switch(reportDisplayLevel){
 
             case SchoolReportsConstants.REPORT_DISPLAY_LEVEL_STATEWISE:
@@ -545,8 +600,6 @@ public class NumberOfSchools extends AppCompatActivity implements
                  */
                 intent = new Intent(this,NumberOfSchoolsLevelWise.class);
                 intent.putExtra(SchoolReportsConstants.EXTRA_KEY_ACADEMIC_YEAR,academicYear);
-                //intent.putExtra(SchoolReportsConstants.EXTRA_KEY_CODE_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateCode);
-                //intent.putExtra(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER,zoneDistrictOrStateName);
                 intent.putExtra(SchoolReportsConstants.EXTRA_PARAM_KEY_REPORT_DISPLAY_LEVEL_WISE_TYPE,SchoolReportsConstants.REPORT_DISPLAY_LEVEL_STATEWISE);
                 startActivity(intent);
                 break;
@@ -588,9 +641,9 @@ public class NumberOfSchools extends AppCompatActivity implements
 
 
             case SchoolReportsConstants.REPORT_DISPLAY_INVALID:
+                Log.e(TAG,"Invalid report request received with report code:" + reportDisplayLevel);
                 break;
         }
-        Log.d(TAG,"You clicked it!!!!");
     }
 
     /*

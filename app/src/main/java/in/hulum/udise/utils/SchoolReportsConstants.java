@@ -2,9 +2,12 @@ package in.hulum.udise.utils;
 
 /**
  * Created by Irshad on 03-04-2018.
+ * This class contains the constants used in various school reports.
+ * These have been kept in one place to modify them easily
  */
 
 public class SchoolReportsConstants {
+    
     public static final String SHARED_PREFERENCES_FILE = "in.hulum.udise.sharedprefs";
     public static final String SHARED_PREFERENCES_NAVIGATION_DRAWER_USER_TYPE_STRING = "in.hulum.udise.sharedprefs.keys.USER_TYPE_STRING";
     public static final String SHARED_PREFERENCES_NAVIGATION_DRAWER_SUBTITLE = "in.hulum.udise.sharedprefs.keys.DRAWER_SUBTITLE";
@@ -28,13 +31,20 @@ public class SchoolReportsConstants {
     public static final int MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_DISTRICT = 60;
     public static final int MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_ZONE = 70;
 
-
-
+    /**
+     * Constants for determining type of school.
+     * Used in {@link SchoolReportsHelper#determineSchoolType(int)}
+     * and various other places
+     */
     public static final int PRIMARY_SCHOOL = 1000;
     public static final int MIDDLE_SCHOOL = 2000;
     public static final int HIGH_SCHOOL = 3000;
     public static final int HIGHER_SECONDARY_SCHOOL = 4000;
 
+    /*
+     * These flags are used for recyclerview items to identify
+     * the type of item in the list
+     */
     public static final int FLAG_ITEM_IS_NATIONAL_SUMMARY = 10;
     public static final int FLAG_ITEM_IS_STATE_SUMMARY = 20;
     public static final int FLAG_ITEM_IS_DISTRICT_SUMMARY = 30;
@@ -44,12 +54,20 @@ public class SchoolReportsConstants {
 
     public static final int FLAG_ITEM_IS_MANAGEMENT_DETAIL = 90;
 
+    /**
+     * These constants are used to display appropriate level of reports
+     * in {@link in.hulum.udise.NumberOfSchools} and
+     * {@link in.hulum.udise.NumberOfSchoolsLevelWise}
+     * Also used in recyclerview adapter
+     * {@link in.hulum.udise.adapters.NumberOfSchoolsSummaryAdapter}
+     */
+
     public static final int REPORT_DISPLAY_LEVEL_STATEWISE = 110;
     public static final int REPORT_DISPLAY_LEVEL_DISTRICTWISE = 120;
     public static final int REPORT_DISPLAY_LEVEL_ZONEWISE = 130;
     public static final int REPORT_DISPLAY_LEVEL_CLUSTERWISE = 140;
     public static final int REPORT_DISPLAY_LEVEL_TAKE_NO_ACTION = 150;
-    public static final int REPORT_DISPLAY_LEVEL_ASSEMBLY_CONSTITUENCY_WISE = 160;
+    public static final int REPORT_DISPLAY_INVALID = -1;
 
     public static final int REPORT_DISPLAY_NATIONAL_SUMMARY = 210;
     public static final int REPORT_DISPLAY_STATE_SUMMARY =220;
@@ -59,7 +77,11 @@ public class SchoolReportsConstants {
     public static final int REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_STATE = 260;
     public static final int REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_DISTRICT = 270;
     public static final int REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_ZONE = 280;
-    public static final int REPORT_DISPLAY_INVALID = -1;
+
+
+    /*
+     * Constants used in various intent.putExtra/bundle.putString data exchange structures
+     */
 
     public static final String EXTRA_PARAM_KEY_REPORT_DISPLAY_SUMMARY_TYPE = "in.hulum.udise.extra.REPORT_DISPLAY_SUMMARY";
     public static final String EXTRA_PARAM_KEY_REPORT_DISPLAY_LEVEL_WISE_TYPE = "in.hulum.udise.extra.REPORT_DISPLAY_LEVEL_WISE_TYPE";
@@ -68,4 +90,5 @@ public class SchoolReportsConstants {
     public static final String EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER = "in.hulum.udise.extra.STATE_DISTRICT_ZONE_CLUSTER_NAME";
     public static final String EXTRA_KEY_PARENT_STATE_DISTRICT_OR_ZONE_CODE = "in.hulum.udise.extra.PARENT_CODE";
     public static final String EXTRA_KEY_ACADEMIC_YEAR = "in.hulum.udise.extra.ACADEMIC_YEAR";
+    public static final String EXTRA_KEY_SHOW_ASSEMBLY_CONSTITUENCY_WISE_REPORT_TOGGLE = "in.hulum.udise.extra.ASSEMBLY_CONSTITUENCY_TOGGLE";
 }

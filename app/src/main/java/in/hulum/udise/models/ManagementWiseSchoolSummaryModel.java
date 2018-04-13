@@ -6,7 +6,10 @@ package in.hulum.udise.models;
 
 public class ManagementWiseSchoolSummaryModel {
 
-
+    /*
+     * These two variables hold the Udise Code
+     * and name of the entity (State, District, Zone or Cluster)
+     */
     private String code;
     private String name;
 
@@ -17,13 +20,35 @@ public class ManagementWiseSchoolSummaryModel {
      */
     private String extraPayLoad;
 
+    /**
+     * This variable holds value for determining the type of
+     * data this model contains like State, District, Zone, Cluster,
+     * Assembly Constituency or Management Detail.
+     * It contains one of the MODEL_TYPE values contained in the
+     * {@link in.hulum.udise.utils.SchoolReportsConstants}
+     */
     private int modelType;
+
+    /*
+     * Stores Summary heading in case of State, District, Zone, Cluster
+     * or Assembly Constituency.
+     *
+     * Stores Management Name in case of management details
+     */
     private String managementNameOrSummaryHeading;
+
+    /*
+     * Variables for storing number of schools
+     */
     private int primarySchools;
     private int middleSchools;
     private int highSchools;
     private int higherSecondarySchools;
     private int flagIsSummaryOrManagementDetail;
+
+    /*
+     * Getters and Setters
+     */
 
     public int getFlagIsSummaryOrManagementDetail() {
         return flagIsSummaryOrManagementDetail;

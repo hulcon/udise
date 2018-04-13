@@ -17,7 +17,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="32dp"
-            android:text="ENROLMENT REPORTS"
+            android:text="@string/enrolment_reports"
             android:textAlignment="center"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -33,7 +33,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="32dp"
-            android:text="Enrolment Summary"
+            android:text="@string/enrolment_summary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/textlabel_enrolment_reports" />
@@ -43,7 +43,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="School-wise Enrolment List"
+            android:text="@string/school_wise_enrolment_list"
             app:layout_constraintEnd_toEndOf="@id/button_enrolment_summary"
             app:layout_constraintStart_toStartOf="@id/button_enrolment_summary"
             app:layout_constraintTop_toBottomOf="@id/button_enrolment_summary" />
@@ -53,7 +53,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Constituency-wise Enrolment"
+            android:text="@string/constituency_wise_enrolment"
             app:layout_constraintEnd_toEndOf="@id/button_enrolment_summary"
             app:layout_constraintStart_toStartOf="@id/button_enrolment_summary"
             app:layout_constraintTop_toBottomOf="@id/button_schoolwise_enrolment_list" />
@@ -63,7 +63,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Compare Enrolment"
+            android:text="@string/compare_enrolment"
             app:layout_constraintEnd_toEndOf="@id/button_enrolment_summary"
             app:layout_constraintStart_toStartOf="@id/button_enrolment_summary"
             app:layout_constraintTop_toBottomOf="@id/button_constituencywise_enrolment" />
@@ -73,7 +73,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Enrolment Based School List"
+            android:text="@string/enrolment_based_school_list"
             app:layout_constraintStart_toStartOf="@id/button_enrolment_summary"
             app:layout_constraintEnd_toEndOf="@id/button_enrolment_summary"
             app:layout_constraintTop_toBottomOf="@id/button_compare_enrolment"/>

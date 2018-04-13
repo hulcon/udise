@@ -12,11 +12,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import in.hulum.udise.models.NumberOfSchoolsModel;
 import in.hulum.udise.models.UserDataModel;
 
 /**
  * Created by Irshad on 20-03-2018.
+ * This method contains the basic DbHelper method.
+ * It also contains a few extra methods to determine
+ * the user type and check whether data exists in the
+ * database or not.
+ * It also contains an exclusive method for converting
+ * excel rows into content values that is used in the
+ * import process.
  */
 
 public class UdiseDbHelper extends SQLiteOpenHelper {
@@ -421,225 +427,6 @@ public class UdiseDbHelper extends SQLiteOpenHelper {
 
 
     /**
-     * This method takes district code, district name, academic year and returns a list of type NumberOfSchoolsModel
-     * The first item in the list contains the summary of the <b> district </b> and each subsequent item in the list
-     * contains details of the respective zones.
-     * Each item in the list contains number of primary, middle, high and higher secondary schools for each management type
-     *
-     * @param context the context from which called
-     * @param districtCode four digit district UDISE code passed as a {@link String}.
-     * @param districtName name of the district for which zone wise number of schools is to be found
-     * @param academicYear academic year passed as a {@link String} e.g., 2017-18
-     *
-     * @return a list of type {@link NumberOfSchoolsModel} which contains number of each category of schools for each management
-     *         The first item in the list contains the summary of the district. Rest of the items contain details, one for each zone
-     *
-     */
-
-    public List<NumberOfSchoolsModel> zonewiseNumberOfSchools(Context context, String districtCode, String districtName, String academicYear){
-
-        Cursor returnedCursor;
-
-        List<NumberOfSchoolsModel> numberOfSchoolsModelList = new ArrayList<NumberOfSchoolsModel>();
-
-        String[] projection = {
-                UdiseContract.RawData.COLUMN_UDISE_SCHOOL_CODE,
-                UdiseContract.RawData.COLUMN_ZONE_CODE,
-                UdiseContract.RawData.COLUMN_ZONE_NAME,
-                UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT,
-                UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION,
-                UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY
-        };
-
-        String selectionString = UdiseContract.RawData.COLUMN_DISTRICT_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
-
-        String[] selectionArguments = {districtCode, academicYear};
-
-        returnedCursor = context.getContentResolver().query(UdiseContract.RawData.CONTENT_URI,projection,selectionString,selectionArguments,null);
-
-        if(returnedCursor!=null){
-
-            Set<String> schoolManagementSet = new HashSet<String>();
-            Set<String> zoneCodeSet = new HashSet<String>();
-
-            ArrayList<ContentValues> zoneInfoList = new ArrayList<ContentValues>();
-            ArrayList<ContentValues> managementInfoList = new ArrayList<ContentValues>();
-
-            int indexColumnZoneName = returnedCursor.getColumnIndex(UdiseContract.RawData.COLUMN_ZONE_NAME);
-            int indexColumnZoneCode = returnedCursor.getColumnIndex(UdiseContract.RawData.COLUMN_ZONE_CODE);
-            int indexColumnSchoolManagementCode = returnedCursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT);
-            int indexColumnSchoolManagementDescription = returnedCursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION);
-            int indexColumnSchoolCategoryCode = returnedCursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY);
-
-            /*
-             * Iterate over all the rows of the cursor and
-             * Create a list of distinct values of zones and school managements
-             * We only create distinct values of school managements for the whole district, not for each zone
-             * So, if a zone has 4 managements and other one has only 2 managements we take into account the
-             * 4 managements as it will show up in the district data.
-             * Later while creating the returning list, we take steps to include only respective managements
-             * in the corresponding zones
-             */
-            while(returnedCursor.moveToNext()){
-                /*
-                 * Try to add the zone code to the zoneCodeSet
-                 * If the set accepts the zone code, it means it is a distinct value
-                 * In that case we put the values of zone code and zone name in
-                 * a content value list to use it later as values of sets cannot be directly
-                 * used.
-                 */
-                if(zoneCodeSet.add(returnedCursor.getString(indexColumnZoneCode))){
-                    ContentValues zoneInfo = new ContentValues();
-                    zoneInfo.put(UdiseContract.RawData.COLUMN_ZONE_NAME,returnedCursor.getString(indexColumnZoneName));
-                    zoneInfo.put(UdiseContract.RawData.COLUMN_ZONE_CODE,returnedCursor.getString(indexColumnZoneCode));
-                    /*Add the above value to an array list*/
-                    zoneInfoList.add(zoneInfo);
-                }
-                /*
-                 * As with zones, try adding school management values to the Set and
-                 * check if it succeeds. If the set accepts it (returns true) then it
-                 * is a distinct value. So store it in a Content Value List for later use.
-                 */
-                if(schoolManagementSet.add(returnedCursor.getString(indexColumnSchoolManagementDescription))){
-                    ContentValues managementInfo = new ContentValues();
-                    managementInfo.put(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT,returnedCursor.getInt(indexColumnSchoolManagementCode));
-                    managementInfo.put(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION,returnedCursor.getString(indexColumnSchoolManagementDescription));
-                    /*Add the above value to an array list*/
-                    managementInfoList.add(managementInfo);
-                }
-            }
-
-            /*
-             * First, we count the number of schools for the whole district
-             * and make it the first entry in the return list
-             * Here we will count the number of primary, middle, high and higher secondary schools
-             * for each management for the whole district
-             */
-            NumberOfSchoolsModel districtNumberOfSchoolsModel = new NumberOfSchoolsModel();
-            districtNumberOfSchoolsModel.setModelType(NumberOfSchoolsModel.MODEL_TYPE_DISTRICT);
-            districtNumberOfSchoolsModel.setDistrictCode(districtCode);
-            districtNumberOfSchoolsModel.setDistrictName(districtName);
-            List<NumberOfSchoolsModel.Management> districtManagementList = new ArrayList<NumberOfSchoolsModel.Management>();
-            for(int mgmtCounter=0;mgmtCounter<managementInfoList.size();mgmtCounter++){
-                NumberOfSchoolsModel.Management districtManagement = new NumberOfSchoolsModel.Management();
-
-                districtManagement.setManagementName(managementInfoList.get(mgmtCounter).getAsString(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION));
-                for(int cursorRow=0;cursorRow<returnedCursor.getCount();cursorRow++){
-
-                    returnedCursor.moveToPosition(cursorRow);
-                    if(returnedCursor.getInt(indexColumnSchoolManagementCode)==managementInfoList.get(mgmtCounter).getAsInteger(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT)){
-                        int schoolType = NumberOfSchoolsModel.determineSchoolType(returnedCursor.getInt(indexColumnSchoolCategoryCode));
-                        switch (schoolType){
-                            case NumberOfSchoolsModel.PRIMARY_SCHOOL:
-                                /*
-                                 * Increment total of each category grossly as well as management wise
-                                 * e.g., total primary schools in the district as well as management wise
-                                 * primary schools for each management in the district
-                                 */
-                                districtManagement.incrementPrimarySchools();
-                                districtNumberOfSchoolsModel.incrementTotalPrimarySchools();
-                                break;
-                            case NumberOfSchoolsModel.MIDDLE_SCHOOL:
-                                districtManagement.incrementMiddleSchools();
-                                districtNumberOfSchoolsModel.incrementTotalMiddleSchools();
-                                break;
-                            case NumberOfSchoolsModel.HIGH_SCHOOL:
-                                districtManagement.incrementHighSchools();
-                                districtNumberOfSchoolsModel.incrementTotalHighSchools();
-                                break;
-                            case NumberOfSchoolsModel.HIGHER_SECONDARY_SCHOOL:
-                                districtManagement.incrementHigherSecondarySchools();
-                                districtNumberOfSchoolsModel.incrementTotalHigherSecondarySchools();
-                                break;
-                        }
-                    }
-                }
-                /*
-                 * Add this management to list if and only if there are any schools of this management type
-                 * Otherwise just ignore this management type
-                 */
-                if(districtManagement.getPrimarySchools()>0 || districtManagement.getMiddleSchools()>0 || districtManagement.getHighSchools()>0 || districtManagement.getHigherSecondarySchools()>0){
-                    districtManagementList.add(districtManagement);
-                }
-            }
-            /*
-             * Add this district entry to the return list
-             * This will be the first list item in the return list
-             */
-            districtNumberOfSchoolsModel.setManagementList(districtManagementList);
-            numberOfSchoolsModelList.add(districtNumberOfSchoolsModel);
-
-            /*
-             * District Entry ends here **********************
-             */
-
-
-            /*
-             * Now we calculate number of schools for each zone for each management
-             * Iterate for each management for each zone
-             *
-             */
-
-            for(int zoneCounter=0;zoneCounter<zoneInfoList.size();zoneCounter++){
-                NumberOfSchoolsModel numberOfSchoolsModel = new NumberOfSchoolsModel();
-
-                numberOfSchoolsModel.setModelType(NumberOfSchoolsModel.MODEL_TYPE_ZONE);
-                numberOfSchoolsModel.setDistrictCode(districtCode);
-                numberOfSchoolsModel.setDistrictName(districtName);
-                numberOfSchoolsModel.setZoneCode(zoneInfoList.get(zoneCounter).getAsString(UdiseContract.RawData.COLUMN_ZONE_CODE));
-                numberOfSchoolsModel.setZoneName(zoneInfoList.get(zoneCounter).getAsString(UdiseContract.RawData.COLUMN_ZONE_NAME));
-
-
-                List<NumberOfSchoolsModel.Management> managementList = new ArrayList<NumberOfSchoolsModel.Management>();
-                for(int mgmtCounter=0;mgmtCounter<managementInfoList.size();mgmtCounter++){
-                    NumberOfSchoolsModel.Management management = new NumberOfSchoolsModel.Management();
-
-                    management.setManagementName(managementInfoList.get(mgmtCounter).getAsString(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION));
-                    for(int cursorRow=0;cursorRow<returnedCursor.getCount();cursorRow++){
-
-                        returnedCursor.moveToPosition(cursorRow);
-                        if(returnedCursor.getString(indexColumnZoneCode).equals(zoneInfoList.get(zoneCounter).getAsString(UdiseContract.RawData.COLUMN_ZONE_CODE))
-                                && returnedCursor.getInt(indexColumnSchoolManagementCode)==managementInfoList.get(mgmtCounter).getAsInteger(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT)){
-                            int schoolType = NumberOfSchoolsModel.determineSchoolType(returnedCursor.getInt(indexColumnSchoolCategoryCode));
-                            switch (schoolType){
-                                case NumberOfSchoolsModel.PRIMARY_SCHOOL:
-                                    management.incrementPrimarySchools();
-                                    numberOfSchoolsModel.incrementTotalPrimarySchools();
-                                    break;
-                                case NumberOfSchoolsModel.MIDDLE_SCHOOL:
-                                    management.incrementMiddleSchools();
-                                    numberOfSchoolsModel.incrementTotalMiddleSchools();
-                                    break;
-                                case NumberOfSchoolsModel.HIGH_SCHOOL:
-                                    management.incrementHighSchools();
-                                    numberOfSchoolsModel.incrementTotalHighSchools();
-                                    break;
-                                case NumberOfSchoolsModel.HIGHER_SECONDARY_SCHOOL:
-                                    management.incrementHigherSecondarySchools();
-                                    numberOfSchoolsModel.incrementTotalHigherSecondarySchools();
-                                    break;
-                            }
-                        }
-                    }
-
-                    /*
-                     * Add this management to list if and only if there are any schools of this management type
-                     * Otherwise just ignore this management type
-                     */
-                    if(management.getPrimarySchools()>0 || management.getMiddleSchools()>0 || management.getHighSchools()>0 || management.getHigherSecondarySchools()>0){
-                        managementList.add(management);
-                    }
-                }
-                numberOfSchoolsModel.setManagementList(managementList);
-                numberOfSchoolsModelList.add(numberOfSchoolsModel);
-            }
-            returnedCursor.close();
-        }
-        return numberOfSchoolsModelList;
-    }
-
-
-    /**
      * This method analyses the SQLite database and fills the {@link UserDataModel}
      * with the following data
      *  - Type of user (National/State/District/User)
@@ -665,13 +452,11 @@ public class UdiseDbHelper extends SQLiteOpenHelper {
 
 
 
-        //String selectionString = UdiseContract.RawData.COLUMN_DISTRICT_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
         String sortOrder = UdiseContract.RawData.COLUMN_AC_YEAR + " DESC";
-        //String[] selectionArguments = {districtCode, academicYear};
         Cursor cursor = context.getContentResolver().query(UdiseContract.RawData.CONTENT_URI,projection,null,null,sortOrder);
 
         if(cursor == null){
-            Log.e(TAG,"Cursor is null!!!");
+            Log.e(TAG,"Cursor is null in method determineUserTypeAndDataModel in " + getClass().getName());
             return null;
         }
 
@@ -737,7 +522,7 @@ public class UdiseDbHelper extends SQLiteOpenHelper {
         int numberOfStates = statesList.size();
         int numberOfDistricts = districtsList.size();
         int numberOfZones = zonesList.size();
-        Log.e(TAG,"States " + numberOfStates + " districts " + numberOfDistricts + " zones " + numberOfZones);
+        Log.d(TAG,"States " + numberOfStates + " districts " + numberOfDistricts + " zones " + numberOfZones);
 
         int userType;
 
@@ -770,7 +555,6 @@ public class UdiseDbHelper extends SQLiteOpenHelper {
                  */
             userType = UserDataModel.USER_TYPE_UNKNOWN;
         }
-        Log.e(TAG,"States " + numberOfStates + " districts " + numberOfDistricts + " zones " + numberOfZones + " user type " + userType);
         userDataModel.setAcademicYearsList(academicYearsList);
         userDataModel.setStatesList(statesList);
         userDataModel.setDistrictsList(districtsList);
@@ -789,9 +573,33 @@ public class UdiseDbHelper extends SQLiteOpenHelper {
         return userDataModel;
     }
 
+    /**
+     * This method checks whether any data exists in the database or not.
+     * Currently it simply fetches all the school codes in a cursor and
+     * checks whether the cursor is empty or not.
+     *
+     * Although, it does fine at district and zonal levels, the performance
+     * of this method needs to be tested at state and national levels.
+     *
+     * To avoid causing an ANR, this method should always be called on
+     * a background thread. For this, i have already created a handle action
+     * method {@link in.hulum.udise.ImportJobIntentService#startActionDoesRawDataExistInDatabase(Context)}
+     * in the {@link in.hulum.udise.ImportJobIntentService}
+     *
+     * So this method should not be called directly. Instead
+     * call {@link in.hulum.udise.ImportJobIntentService#startActionDoesRawDataExistInDatabase(Context)}
+     *
+     * @param context
+     * @return boolean value true if the database contains data
+     *         boolean value false if the database is empty
+     */
+
     public boolean doesRawDataExistInDatabase(Context context){
         String[] projection = {UdiseContract.RawData.COLUMN_UDISE_SCHOOL_CODE};
         Cursor cursor = context.getContentResolver().query(UdiseContract.RawData.CONTENT_URI,projection,null,null,null);
+        if(cursor == null){
+            return false;
+        }
         int count = cursor.getCount();
         cursor.close();
         if(count>0){

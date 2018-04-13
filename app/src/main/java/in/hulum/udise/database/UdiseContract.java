@@ -296,6 +296,8 @@ public class UdiseContract {
         public static final String COLUMN_SCHOOL_HAS_ICT = "has_ict";
         public static final String COLUMN_SCHOOL_HAS_CAL = "has_cal";
         public static final String COLUMN_IS_CLUBBED_SCHOOL = "is_clubbed";
+        public static final String COLUMN_PARENT_SCHOOL_UDISE_CODE = "parent_udise_code";
+
         */
         /*
          * Columns not yet implemented
@@ -315,6 +317,5 @@ public class UdiseContract {
         public static final String COLUMN_SCHOOL_SMDC_AC_NUMBER = "smdcacno";
         public static final String COLUMN_SCHOOL_SMDC_IFS_CODE = "smdcifscode";
         */
-
     }
 }

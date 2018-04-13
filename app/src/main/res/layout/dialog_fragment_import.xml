@@ -11,10 +11,10 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="19dp"
-        android:text="Import UDISE Excel File"
+        android:text="@string/import_udise_excel_file"
         android:textSize="16sp"
         android:textStyle="bold"
-        tools:text="Import Excel File" />
+        tools:text="@string/import_udise_excel_file" />
 
     <ProgressBar
         android:id="@+id/progressBar_dialog_import"
@@ -36,8 +36,8 @@
         android:layout_marginTop="23dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:text="You have not imported UDISE data yet! Please import UDISE data from excel file."
-        tools:text="You have not imported UDISE data yet! Please import UDISE data from excel file."/>
+        android:text="@string/you_have_not_imported_udise_data_yet"
+        tools:text="@string/you_have_not_imported_udise_data_yet"/>
 
     <TextView
         android:id="@+id/action_import_data"
@@ -47,10 +47,11 @@
         android:layout_below="@+id/textview_import_dialog_message"
         android:layout_marginTop="42dp"
         android:layout_marginBottom="25dp"
-        android:text="CHOOSE EXCEL FILE"
+        android:text="@string/choose_excel_file"
         android:textColor="@color/colorAccent"
         android:clickable="true"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:focusable="true" />
 
     <TextView
         android:id="@+id/action_cancel"
@@ -59,8 +60,9 @@
         android:layout_alignBaseline="@+id/action_import_data"
         android:layout_alignBottom="@+id/action_import_data"
         android:layout_alignStart="@+id/textview_import_dialog_message"
-        android:text="CANCEL"
+        android:text="@string/cancel"
         android:textColor="@color/colorAccent"
         android:clickable="true"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:focusable="true" />
 </RelativeLayout>

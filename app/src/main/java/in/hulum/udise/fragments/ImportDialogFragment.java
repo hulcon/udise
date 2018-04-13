@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.JobIntentService;
@@ -28,6 +29,7 @@ import static android.app.Activity.RESULT_OK;
 
 /**
  * Created by Irshad on 23-03-2018.
+ * This fragment displays a dialog for importing excel file
  */
 
 public class ImportDialogFragment extends DialogFragment {
@@ -41,12 +43,15 @@ public class ImportDialogFragment extends DialogFragment {
 
     private SharedPreferences mPreferences;
     private String sharedPrefFile = SchoolReportsConstants.SHARED_PREFERENCES_FILE;
-
-    static final int REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT = 7;
-
-    private static final String TAG = "ImportDialogFragment";
     private static final String SHARED_PREFERENCES_KEY_IS_IMPORTING = "in.hulum.udise.sharedpreferences.keys.isimporting";
     private static final String SHARED_PREFERENCES_KEY_PROGRESS = "in.hulum.udise.sharedpreferences.keys.progress";
+
+    private static final int REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT = 7;
+    private static final String KEY_ACTION_BUTTONS_STATE = "in.hulum.udise.dialogfragment.key.ACTION_BUTTON_STATE";
+    public static final String KEY_DIALOG_FRAGMENT_MESSAGE = "in.hulum.udise.dialogfragment.key.DISPLAY_MESSAGE";
+
+    private static final String TAG = "ImportDialogFragment";
+
     private boolean isImporting;
     private int progressPercentage;
 
@@ -82,9 +87,50 @@ public class ImportDialogFragment extends DialogFragment {
                 startActivityForResult(intent, REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT);
             }
         });
+
+        /*
+         * Check if we have saved the button state (on device rotation)
+         * and restore it
+         */
+
+        if(savedInstanceState != null){
+            int visibility = savedInstanceState.getInt(KEY_ACTION_BUTTONS_STATE);
+            mActionCancel.setVisibility(visibility);
+            mActionChooseExcelFile.setVisibility(visibility);
+        }
+
+
+        /*
+         * Check if a custom message was set by setArguments method.
+         * If a custom message was set, get it and display it in the textview
+         * of the dialog fragment.
+         *
+         * In the absence of the custom message, the default message set in the
+         * layout file will be displayed.
+         */
+
+        Bundle args = getArguments();
+        if(args != null){
+            String message = args.getString(KEY_DIALOG_FRAGMENT_MESSAGE);
+            if(message != null){
+                mMessageDisplay.setText(message);
+            }
+        }
+
         return view;
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        /*
+         * Save the visibility state of action buttons.
+         * If the visibility state of buttons is not saved,
+         * the buttons are enabled even when the import process
+         * is going on if the device is rotated.
+         */
+        outState.putInt(KEY_ACTION_BUTTONS_STATE,mActionCancel.getVisibility());
+    }
 
     @Override
     public void onResume() {
@@ -92,7 +138,6 @@ public class ImportDialogFragment extends DialogFragment {
         IntentFilter myFilter = new IntentFilter();
         myFilter.addAction(ImportUdiseData.ACTION_IMPORT_RAW_DATA);
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(responseReceiver,myFilter);
-        Log.d(TAG,"Receiver registered!!!!");
         mPreferences = getContext().getSharedPreferences(sharedPrefFile,Context.MODE_PRIVATE);
         isImporting = mPreferences.getBoolean(SHARED_PREFERENCES_KEY_IS_IMPORTING,false);
         progressPercentage = mPreferences.getInt(SHARED_PREFERENCES_KEY_PROGRESS,0);
@@ -121,15 +166,14 @@ public class ImportDialogFragment extends DialogFragment {
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onPause() {
+        super.onPause();
         LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(responseReceiver);
-        Log.d(TAG,"Alas Receiver unregistered!!!!");
     }
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        //super.onActivityResult(requestCode, resultCode, data);
         switch(requestCode){
             case REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT:
                 if(resultCode==RESULT_OK)
@@ -140,31 +184,33 @@ public class ImportDialogFragment extends DialogFragment {
                     mActionChooseExcelFile.setVisibility(View.INVISIBLE);
                 }
                 break;
+
+            default:
+                Log.e(TAG,"Invalid code passed to onActivityResult method: Request Code " + requestCode);
+                throw new IllegalArgumentException("Invalid code passed to onActivityResult method: Request Code " +requestCode);
         }
     }
 
 
     public class ResponseReceiver extends BroadcastReceiver {
-        /*
-         * TODO:
-         * The dialogfragment should dismiss when the import process is over
-         * It does the required behaviour if the app is in foreground. But if the app is in background
-         * it does not dismiss the dialogfragment
-         *
-         * It needs to be done!!!!
-         */
+
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(TAG,"Entered onReceive in dialog fragment!! with action " + intent.getAction());
-            if(intent.getAction().equals(ImportUdiseData.ACTION_IMPORT_RAW_DATA)){
+
+            /*
+             * Check the type of broadcast received and act accordingly
+             */
+            if(ImportUdiseData.ACTION_IMPORT_RAW_DATA.equals(intent.getAction())){
                 boolean isError = intent.getBooleanExtra(ImportUdiseData.PARAM_ERROR,false);
                 boolean isAnalyzing = intent.getBooleanExtra(ImportUdiseData.PARAM_IS_ANALYSING,false);
                 boolean isImporting = intent.getBooleanExtra(ImportUdiseData.PARAM_IS_IMPORTING,false);
                 boolean isUserIdentified = intent.getBooleanExtra(ImportUdiseData.PARAM_USER_IDENTIFIED,false);
                 boolean hasFinishedImportingSuccessfully = intent.getBooleanExtra(ImportUdiseData.PARAM_IMPORT_ENDED_SUCCESSFULLY,false);
 
-                Log.d(TAG,"error is " + isError + " analysing " + isAnalyzing + " importing " + isImporting + " user identified " + isUserIdentified);
+                /*
+                 * If import process has completed, dismiss the import dialog
+                 */
                 if(hasFinishedImportingSuccessfully){
                     getDialog().dismiss();
                     /*
@@ -199,7 +245,6 @@ public class ImportDialogFragment extends DialogFragment {
                     int value = intent.getIntExtra(ImportUdiseData.PARAM_PERCENTAGE_COMPLETED,0);
                     mMessageDisplay.setText(msg);
                     mImportDialogProgressBar.setProgress(value);
-                    //Log.d(TAG,"Analysing message " + msg + " and percent " + value);
                 }
                 else if(isImporting){
                     String msg = intent.getStringExtra(ImportUdiseData.PARAM_MESSAGE);
@@ -210,13 +255,10 @@ public class ImportDialogFragment extends DialogFragment {
                 else if(isUserIdentified){
                     String msg = intent.getStringExtra(ImportUdiseData.PARAM_MESSAGE);
                     mMessageDisplay.setText(msg);
-                    //Log.d(TAG,"User identified is " + intent.getStringExtra(ImportData.PARAM_USER_TYPE));
                 }
                 else{
                     String msg = intent.getStringExtra(ImportUdiseData.PARAM_MESSAGE);
                     mMessageDisplay.setText(msg);
-                    //Log.d(TAG,"Percent completed is  " + intent.getIntExtra(ImportData.PARAM_PERCENTAGE_COMPLETED,-1));
-                    //Log.d(TAG,"Message is " + msg);
                 }
             }
         }

@@ -14,6 +14,21 @@ import in.hulum.udise.R;
 
 /**
  * Created by Irshad on 28-03-2018.
+ * This class contains various methods for implementing
+ * Oreo compatible notifications.
+ *
+ * Currently, we are supporting two types of notification channels
+ * - Notification without Alerts (Progress Channel): This channel
+ *   is used for displaying progress percentage notifications while
+ *   excel files are being imported. Since we do not want alerts
+ *   (vibration and sounds) for each progress percentage notification,
+ *   therefore, this channel turns off the vibration and audio alerts.
+ *
+ * - Notification with Alerts (Udise Alerts Channel): This channel
+ *   is used for displaying error notifications or alert messages that
+ *   need immediate user attention. As such, this channel uses both
+ *   vibration as well as audio alerts for notifications. Important
+ *   notifications must use this channel only.
  */
 
 public class NotificationHelper extends ContextWrapper {
@@ -33,6 +48,10 @@ public class NotificationHelper extends ContextWrapper {
 
     private void createChannels(){
 
+        /*
+         * Notification channels are used by Oreo and above only.
+         * So check for the same.
+         */
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel alertChannel = new NotificationChannel(UDISE_WITH_ALERTS_CHANNEL_ID,UDISE_WITH_ALERTS_CHANNEL_NAME,importance);
@@ -62,6 +81,14 @@ public class NotificationHelper extends ContextWrapper {
         return manager;
     }
 
+    /**
+     * This method creates a notification with alerts (using notification channel
+     * with alerts). This method is used for creating important notifications, like the ones
+     * used for displaying error in the notification, making alerts to get noticed
+     * @param title Title of the notification
+     * @param body Detailed message of the notification
+     * @return NotificationCompat.Builder object
+     */
     public NotificationCompat.Builder getNotificationWithAlerts(String title, String body){
         return new NotificationCompat.Builder(getApplicationContext(),UDISE_WITH_ALERTS_CHANNEL_ID)
                 .setContentTitle(title)
@@ -74,6 +101,20 @@ public class NotificationHelper extends ContextWrapper {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setAutoCancel(true);
     }
+
+    /**
+     * This method is used for creating the notification with alerts (vibration
+     * as well as sound). This notification is displayed only when the excel
+     * file import process is completed. The only difference between this method
+     * and the {@link NotificationHelper#getNotificationWithAlerts} method is
+     * that this method takes a pending intent.
+     * @param title Title of the notification
+     * @param body Detailed message of the notification
+     * @param pendingIntent pendingIntent object containing info about
+     *                      the activity to be started when the notification
+     *                      is clicked
+     * @return NotificationCompat.Builder object
+     */
 
     public NotificationCompat.Builder getFinalNotificationWithAlerts(String title, String body, PendingIntent pendingIntent){
         return new NotificationCompat.Builder(getApplicationContext(),UDISE_WITH_ALERTS_CHANNEL_ID)
@@ -89,6 +130,15 @@ public class NotificationHelper extends ContextWrapper {
                 .setAutoCancel(true);
     }
 
+    /**
+     * This method creates a notification without alerts (using notification channel
+     * without alerts). This method is used for creating silent notifications, like the ones
+     * displaying "Loading, Please Wait..." in the notification without making any noise
+     * @param title Title of the notification
+     * @param body Detailed message of the notification
+     * @return NotificationCompat.Builder object
+     */
+
     public NotificationCompat.Builder getNotificationWithoutAlerts(String title, String body){
         return new NotificationCompat.Builder(getApplicationContext(),UDISE_PROGRESS_CHANNEL_ID)
                 .setContentTitle(title)
@@ -101,6 +151,17 @@ public class NotificationHelper extends ContextWrapper {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setAutoCancel(true);
     }
+
+    /**
+     * This method also creates silent notifications. The only difference between this and
+     * the above method {@link NotificationHelper#getNotificationWithoutAlerts(String, String)}
+     * is that this method also creates a progress bar in the notification panel
+     * @param title Title of the notification
+     * @param body Detailed message
+     * @param progress value for progress percentage to be displayed in the progress bar
+     *                 in the notification
+     * @return NotificationCompat.Builder object
+     */
 
     public NotificationCompat.Builder getNotificationWithProgress(String title, String body,int progress){
         return new NotificationCompat.Builder(getApplicationContext(),UDISE_PROGRESS_CHANNEL_ID)

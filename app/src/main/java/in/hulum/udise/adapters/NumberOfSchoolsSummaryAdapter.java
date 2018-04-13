@@ -14,12 +14,15 @@ import java.util.List;
 
 import in.hulum.udise.R;
 import in.hulum.udise.models.ManagementWiseSchoolSummaryModel;
-import in.hulum.udise.models.NumberOfSchoolsModel;
 import in.hulum.udise.utils.SchoolReportsConstants;
 
 /**
  * Created by Irshad on 02-04-2018.
  * This class contains the recyclerview adapter for displaying number of schools report
+ * This adapter is used by both {@link in.hulum.udise.NumberOfSchools} as well as
+ * {@link in.hulum.udise.NumberOfSchoolsLevelWise} classes. So it is used both in
+ * case of "Number of Schools Management Summary" reports as well as
+ * "Number of Schools Level-Wise Summary" reports
  */
 
 public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOfSchoolsSummaryAdapter.NumberOfSchoolsViewHolder>{
@@ -37,8 +40,9 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
     /*
      * Below, i've defined an interface to handle clicks on items within this adapter.
      * In the constructor of this adapter {NumberOfSchoolsSummaryAdapter}, an instance of a
-     * class (NumberOfSchools) is received that has implemented said interface. We store that instance
-     * in this variable to call the onClick method whenever an item is clicked in the list.
+     * class (NumberOfSchools or NumberOfSchoolsLevelWise) is received that has implemented
+     * said interface. We store that instance in this variable to call the onClick method
+     * whenever an item is clicked in the list.
      */
     final private NumberOfSchoolsSummaryAdapterOnClickHandler mClickHandler;
 
@@ -52,7 +56,7 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
      * recyclerview displays the summary of the whole district and the rest of the
      * items display the management wise details. So a different layout is used for
      * the first item (summary) and a different layout is used for the rest of the
-     * items (management-wise details.
+     * items (management-wise details).
      *
      * When displaying level-wise list like zone-wise list summary, each entry
      * represents a similar entity, summary of a zone in this case. So each item must use
@@ -61,22 +65,38 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
     private boolean mShouldUseOneLayoutInsteadOfTwo;
 
     /**
-     * The interface that receives onClick messages
+     * The interface that receives onClick events
      */
     public interface NumberOfSchoolsSummaryAdapterOnClickHandler {
         void onClick(int reportDisplayLevel, String zoneDistrictOrStateCode, String zoneDistrictOrStateName,String parentCode);
     }
 
-    private List<NumberOfSchoolsModel> numberOfSchoolsModelList;
 
+    /**
+     * This method is the constructor for this Adapter.
+     * @param context context of the calling class
+     * @param clickHandler name of the class (typically calling class) which has the clickHandler
+     *                     method. The clickHandler method simply processes the clicks on the
+     *                     recyclerview items. Click events are forwarded to this clickHandler
+     *                     through the interface {@link NumberOfSchoolsSummaryAdapterOnClickHandler}
+     *                     of this class.
+     * @param isLevelWiseModule a boolean representing whether this adapter is used to display
+     *                          a management-wise summary or a level-wise list. In case of
+     *                          management-wise summary the adapter uses two layouts, one for the
+     *                          first item and the second one for the rest of the items. In case of
+     *                          level-wise list, the adapter uses a single layout file for all the
+     *                          items.
+     */
     public NumberOfSchoolsSummaryAdapter(@NonNull Context context,NumberOfSchoolsSummaryAdapterOnClickHandler clickHandler,boolean isLevelWiseModule){
         mContext = context;
         mClickHandler = clickHandler;
         mShouldUseOneLayoutInsteadOfTwo = isLevelWiseModule;
     }
+
+
     /**
-     * Called when RecyclerView needs a new {@link android.support.v7.widget.RecyclerView.ViewHolder} of the given type to represent
-     * an item.
+     * Called when RecyclerView needs a new {@link android.support.v7.widget.RecyclerView.ViewHolder}
+     * of the given type to represent an item.
      * <p>
      * This new ViewHolder should be constructed with a new View that can represent the items
      * of the given type. You can either create a new View manually or inflate it from an XML
@@ -98,6 +118,16 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
     public NumberOfSchoolsSummaryAdapter.NumberOfSchoolsViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         int layoutId;
 
+        /*
+         * Determine whether we should use one or two layout files
+         * to inflate the recyclerview items based on the argument
+         * passed to this method.
+         *
+         * In case of management-wise summary the adapter uses two
+         * layouts, one for the first item and the second one for
+         * the rest of the items. In case of level-wise list, the
+         * adapter uses a single layout file for all the items.
+         */
         if(mShouldUseOneLayoutInsteadOfTwo){
             /*
              * If this is a level-wise summary list like a zone-wise list,
@@ -119,7 +149,7 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
                     layoutId = R.layout.summary_list_item_number_of_schools_management_wise;
                     break;
                 default:
-                    throw new IllegalArgumentException("Invalid view type passed to NumberOfSchools RecyclerView");
+                    throw new IllegalArgumentException("Invalid view type passed to NumberOfSchools RecyclerView onCreateViewHolder method");
             }
         }
 
@@ -151,17 +181,9 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
      */
     @Override
     public void onBindViewHolder(NumberOfSchoolsSummaryAdapter.NumberOfSchoolsViewHolder holder, int position) {
-        //mCursor.moveToPosition(position);
-        Log.d("BindView","position is " + position);
-        Log.d("BindView","Heading " + mSchoolSummaryList.get(position).getManagementNameOrSummaryHeading());
 
         holder.summaryCardViewTitle.setText(mSchoolSummaryList.get(position).getManagementNameOrSummaryHeading());
-
-
         holder.numberOfPrimarySchools.setText(Integer.toString(mSchoolSummaryList.get(position).getPrimarySchools()));
-        Log.d("BindView","Primary " + mSchoolSummaryList.get(position).getPrimarySchools());
-
-        Log.d("BindView","Middle " + mSchoolSummaryList.get(position).getMiddleSchools());
         holder.numberOfMiddleSchools.setText(Integer.toString(mSchoolSummaryList.get(position).getMiddleSchools()));
         holder.numberOfHighSchools.setText(Integer.toString(mSchoolSummaryList.get(position).getHighSchools()));
         holder.numberOfHigherSecondarySchools.setText(Integer.toString(mSchoolSummaryList.get(position).getHigherSecondarySchools()));
@@ -221,6 +243,14 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
             view.setOnClickListener(this);
         }
 
+        /**
+         * This gets called by the child views (item views) during a click.
+         * We determine the type of item clicked and then call the
+         * onClick handler registered with this adapter, passing the desired
+         * level of report to be displayed, code, name and parent code
+         * @param v the View that was clicked
+         */
+
         @Override
         public void onClick(View v) {
 
@@ -250,7 +280,6 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_LEVEL_CLUSTERWISE;
                     code = mSchoolSummaryList.get(adapterPosition).getCode();
                     name = mSchoolSummaryList.get(adapterPosition).getName();
-                    Log.d(TAG,"Zone name in recyler is " + name + " and code is " + code);
                     break;
                 case SchoolReportsConstants.MODEL_TYPE_CLUSTER:
                     /*
@@ -290,12 +319,14 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
                     name = mSchoolSummaryList.get(adapterPosition).getName();
                     break;
 
+                /*
+                 * Cases related to Assembly Constituency reports start from here
+                 */
                 case SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_STATE:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_STATE;
                     code = mSchoolSummaryList.get(adapterPosition).getCode();
                     name = mSchoolSummaryList.get(adapterPosition).getName();
                     parentCode = mSchoolSummaryList.get(adapterPosition).getExtraPayLoad();
-                    Log.d(TAG,"Assem Code " + code + " Assem name " + name);
                     break;
 
                 case SchoolReportsConstants.MODEL_TYPE_ASSEMBLY_CONSTITUENCY_WISE_LIST_FOR_DISTRICT:
@@ -316,9 +347,9 @@ public class NumberOfSchoolsSummaryAdapter extends RecyclerView.Adapter<NumberOf
 
                 default:
                     reportDisplayLevel = SchoolReportsConstants.REPORT_DISPLAY_INVALID;
+                    Log.e(TAG,"Invalid Model Type passed to the NumberOfSchoolsSummaryAdapter class with model code " + model);
 
             }
-            Log.d(TAG,"Generated request for report level " + reportDisplayLevel);
             mClickHandler.onClick(reportDisplayLevel,code,name,parentCode);
         }
     }

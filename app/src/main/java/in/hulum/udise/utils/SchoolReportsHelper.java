@@ -26,16 +26,18 @@ public class  SchoolReportsHelper {
      * This method generates management-wise summary of a single assembly constituency.
      * It is important to note that the summary generated is not of the whole assembly constituency.
      * The summary is generated only for portion of the assembly constituency which is under the
-     * selected State,
-     * @param cursor
-     * @param entityCode
-     * @param entityName
-     * @param parentCode
-     * @param parentEntityType
-     * @return
+     * selected State, District or Zone
+     * @param cursor cursor containing data of the assembly constituency under the desired
+     *               State, District or Zone
+     * @param entityCode udise code of the assembly constituency
+     * @param entityName name of the assembly constituency
+     * @param parentCode udise code of the parent entity
+     * @param parentEntityType type of parent entity for which the assembly constituency summary is to
+     *                         be created (State, District or Zone)
+     * @return list of type {@link ManagementWiseSchoolSummaryModel}, the first entry of which
+     *         contains the summary of all managements and the rest of the items in the list
+     *         contain details of each management separately
      */
-
-
     public static List<ManagementWiseSchoolSummaryModel> assemblyConstituencyManagementWiseSummary(Cursor cursor,String entityCode,String entityName,String parentCode,int parentEntityType){
 
         if(cursor==null){
@@ -49,30 +51,34 @@ public class  SchoolReportsHelper {
 
         String parentEntityName = null;
 
+        /*
+         * Move cursor to the first row of data
+         */
         cursor.moveToFirst();
 
         int indexColumnSchoolManagementCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT);
         int indexColumnSchoolManagementDescription = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT_DESCRIPTION);
         int indexColumnSchoolCategoryCode = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_SCHOOL_CATEGORY);
+
+        /*
+         * Determine parent of this assembly constituency for displaying
+         * appropriate label
+         */
         int indexParentEntityName;
         switch (parentEntityType){
             case SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_STATE:
                 indexParentEntityName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_STATE_NAME);
-                Log.d(TAG,"parent index for state is " + indexParentEntityName);
                 parentEntityName = cursor.getString(indexParentEntityName) + " State";
                 break;
 
             case SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_DISTRICT:
                 indexParentEntityName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_DISTRICT_NAME);
-                Log.d(TAG,"parent index for district is " + indexParentEntityName);
                 parentEntityName = cursor.getString(indexParentEntityName) + " District";
                 break;
 
             case SchoolReportsConstants.ASSEMBLY_CONSTITUENCY_PARENT_ZONE:
                 indexParentEntityName = cursor.getColumnIndex(UdiseContract.RawData.COLUMN_ZONE_NAME);
-                Log.d(TAG,"parent index for zone is " + indexParentEntityName);
                 parentEntityName = cursor.getString(indexParentEntityName) + " Zone";
-                Log.d(TAG,"parent name for zone is " + parentEntityName);
                 break;
 
             default:
@@ -131,12 +137,13 @@ public class  SchoolReportsHelper {
 
         /*
          * Assembly Constituency summary is created. Make it the first item in the list
+         * This summary contains the number of schools for all managements in aggregate.
          */
         assemblyConstituencySummaryList.add(assemblyConstituencySummary);
 
         /*
-         * Here we will count the number of primary, middle, high and higher secondary schools
-         * for each management
+         * Now we will count the number of primary, middle, high and higher secondary schools
+         * for each management separately
          */
         for(int mgmtCounter=0;mgmtCounter<managementInfoList.size();mgmtCounter++){
             ManagementWiseSchoolSummaryModel managementWiseSchoolSummaryModel = new ManagementWiseSchoolSummaryModel();
@@ -175,7 +182,6 @@ public class  SchoolReportsHelper {
              */
             if(managementWiseSchoolSummaryModel.getPrimarySchools()>0 || managementWiseSchoolSummaryModel.getMiddleSchools()>0 || managementWiseSchoolSummaryModel.getHighSchools()>0 || managementWiseSchoolSummaryModel.getHigherSecondarySchools()>0){
                 assemblyConstituencySummaryList.add(managementWiseSchoolSummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return assemblyConstituencySummaryList;
@@ -185,6 +191,8 @@ public class  SchoolReportsHelper {
 
     /**
      * This method generates assembly constituency wise list containing number of schools.
+     * It should be noted that the cursor contains data of the desired state, district or
+     * zone only and not the whole database.
      * @param cursor cursor containing schools of the desired constituency under desired
      *               state, district or zone
      * @param parentEntityStateDistrictOrZone type of the parent entity i.e., one of the
@@ -225,7 +233,7 @@ public class  SchoolReportsHelper {
         for(int index=0;index<cursor.getCount();index++) {
             cursor.moveToPosition(index);
             /*
-             * Create a list of unique assembly constituencies found in the database
+             * Create a list of unique assembly constituencies found in the cursor
              */
             if(uniqueAssemblyConstituencyCodesSet.add(cursor.getString(indexColumnAssemblyConstituencyCode))){
                 ContentValues assemblyConstituencyInfo = new ContentValues();
@@ -234,12 +242,10 @@ public class  SchoolReportsHelper {
                 assemblyConstituencyInfoList.add(assemblyConstituencyInfo);
             }
         }
-        Log.e(TAG,"Total Constituencies found is " + assemblyConstituencyInfoList.size());
-
 
         /*
          * Here we will count the number of primary, middle, high and higher secondary schools
-         * for each State
+         * for each Assembly Constituency
          */
         for(int assemblyConstituencyCounter=0;assemblyConstituencyCounter<assemblyConstituencyInfoList.size();assemblyConstituencyCounter++){
             ManagementWiseSchoolSummaryModel assemblyConstituencySummaryModel = new ManagementWiseSchoolSummaryModel();
@@ -262,6 +268,7 @@ public class  SchoolReportsHelper {
 
                 default:
                     Log.e(TAG,"Unknown Assembly Constituency-wise report with report code " + parentEntityStateDistrictOrZone);
+                    throw new IllegalArgumentException("Unknown Assembly Constituency-wise report with report code " + parentEntityStateDistrictOrZone);
             }
 
             assemblyConstituencySummaryModel.setFlagIsSummaryOrManagementDetail(SchoolReportsConstants.FLAG_ITEM_IS_ASSEMBLY_CONSTITUENCY_SUMMARY);
@@ -295,12 +302,11 @@ public class  SchoolReportsHelper {
                 }
             }
             /*
-             * Add this state to the list if and only if there are any schools in this state
-             * Otherwise just ignore it
+             * Add this assembly constituency to the list if and only if there are any schools
+             * in it. Otherwise just ignore it
              */
             if(assemblyConstituencySummaryModel.getPrimarySchools()>0 || assemblyConstituencySummaryModel.getMiddleSchools()>0 || assemblyConstituencySummaryModel.getHighSchools()>0 || assemblyConstituencySummaryModel.getHigherSecondarySchools()>0){
                 assemblyConstituencyWiseSummaryList.add(assemblyConstituencySummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return assemblyConstituencyWiseSummaryList;
@@ -367,7 +373,6 @@ public class  SchoolReportsHelper {
 
             String currentState = stateInfoList.get(stateCounter).getAsString(UdiseContract.RawData.COLUMN_STATE_NAME);
             stateSummaryModel.setName(currentState);
-            Log.d(TAG,"Current state set to " + currentState + " at position " + stateCounter);
             stateSummaryModel.setManagementNameOrSummaryHeading(currentState);
 
             for(int cursorRow=0;cursorRow<cursor.getCount();cursorRow++){
@@ -397,7 +402,6 @@ public class  SchoolReportsHelper {
              */
             if(stateSummaryModel.getPrimarySchools()>0 || stateSummaryModel.getMiddleSchools()>0 || stateSummaryModel.getHighSchools()>0 || stateSummaryModel.getHigherSecondarySchools()>0){
                 stateWiseSummaryList.add(stateSummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return stateWiseSummaryList;
@@ -495,7 +499,6 @@ public class  SchoolReportsHelper {
              */
             if(districtSummaryModel.getPrimarySchools()>0 || districtSummaryModel.getMiddleSchools()>0 || districtSummaryModel.getHighSchools()>0 || districtSummaryModel.getHigherSecondarySchools()>0){
                 districtWiseSummaryList.add(districtSummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return districtWiseSummaryList;
@@ -593,7 +596,6 @@ public class  SchoolReportsHelper {
              */
             if(zoneSummaryModel.getPrimarySchools()>0 || zoneSummaryModel.getMiddleSchools()>0 || zoneSummaryModel.getHighSchools()>0 || zoneSummaryModel.getHigherSecondarySchools()>0){
                 zoneWiseSummaryList.add(zoneSummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return zoneWiseSummaryList;
@@ -691,7 +693,6 @@ public class  SchoolReportsHelper {
              */
             if(clusterSummaryModel.getPrimarySchools()>0 || clusterSummaryModel.getMiddleSchools()>0 || clusterSummaryModel.getHighSchools()>0 || clusterSummaryModel.getHigherSecondarySchools()>0){
                 clusterWiseSummaryList.add(clusterSummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return clusterWiseSummaryList;
@@ -702,7 +703,6 @@ public class  SchoolReportsHelper {
      * Summary Methods Start From Here
      * *******************************
      */
-
 
 
 
@@ -823,7 +823,6 @@ public class  SchoolReportsHelper {
              */
             if(managementWiseSchoolSummaryModel.getPrimarySchools()>0 || managementWiseSchoolSummaryModel.getMiddleSchools()>0 || managementWiseSchoolSummaryModel.getHighSchools()>0 || managementWiseSchoolSummaryModel.getHigherSecondarySchools()>0){
                 nationalSummaryList.add(managementWiseSchoolSummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return nationalSummaryList;
@@ -951,7 +950,6 @@ public class  SchoolReportsHelper {
              */
             if(managementWiseSchoolSummaryModel.getPrimarySchools()>0 || managementWiseSchoolSummaryModel.getMiddleSchools()>0 || managementWiseSchoolSummaryModel.getHighSchools()>0 || managementWiseSchoolSummaryModel.getHigherSecondarySchools()>0){
                 stateSummaryList.add(managementWiseSchoolSummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return stateSummaryList;
@@ -1084,7 +1082,6 @@ public class  SchoolReportsHelper {
              */
             if(managementWiseSchoolSummaryModel.getPrimarySchools()>0 || managementWiseSchoolSummaryModel.getMiddleSchools()>0 || managementWiseSchoolSummaryModel.getHighSchools()>0 || managementWiseSchoolSummaryModel.getHigherSecondarySchools()>0){
                 districtSummaryList.add(managementWiseSchoolSummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return districtSummaryList;
@@ -1216,7 +1213,6 @@ public class  SchoolReportsHelper {
              */
             if(managementWiseSchoolSummaryModel.getPrimarySchools()>0 || managementWiseSchoolSummaryModel.getMiddleSchools()>0 || managementWiseSchoolSummaryModel.getHighSchools()>0 || managementWiseSchoolSummaryModel.getHigherSecondarySchools()>0){
                 zoneSummaryList.add(managementWiseSchoolSummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return zoneSummaryList;
@@ -1347,7 +1343,6 @@ public class  SchoolReportsHelper {
              */
             if(managementWiseSchoolSummaryModel.getPrimarySchools()>0 || managementWiseSchoolSummaryModel.getMiddleSchools()>0 || managementWiseSchoolSummaryModel.getHighSchools()>0 || managementWiseSchoolSummaryModel.getHigherSecondarySchools()>0){
                 clusterSummaryList.add(managementWiseSchoolSummaryModel);
-                Log.d(TAG,"Entry Added!!");
             }
         }
         return clusterSummaryList;
@@ -1393,8 +1388,6 @@ public class  SchoolReportsHelper {
                 category = 0;
                 break;
         }
-
         return category;
     }
-
 }

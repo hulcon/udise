@@ -12,15 +12,28 @@ import java.util.List;
  */
 
 public class UserDataModel {
-
+    /*
+     * Constants for designating type of data found
+     * in the SQLite database
+     */
     public static final int USER_TYPE_NATIONAL = 10;
     public static final int USER_TYPE_STATE = 11;
     public static final int USER_TYPE_DISTRICT = 12;
     public static final int USER_TYPE_ZONE = 13;
     public static final int USER_TYPE_UNKNOWN = 0;
 
+
+    /*
+     * Variable containing type of user.
+     * Hold one of the above mentioned constant values
+     */
     private int userType;
 
+    /*
+     * Variables containing lists of states, districts, zones and academic years.
+     * By creating a list of each of these entities, we can determine the what
+     * kind of user (National/State/District/Zone) is using the app
+     */
     List<States> statesList;
     List<Districts> districtsList;
     List<Zones> zoneList;

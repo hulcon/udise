@@ -1,17 +1,13 @@
 package in.hulum.udise;
 
-import android.app.NotificationChannel;
 import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -26,30 +22,35 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import in.hulum.udise.database.UdiseContract;
 import in.hulum.udise.database.UdiseDbHelper;
-import in.hulum.udise.models.NumberOfSchoolsModel;
 import in.hulum.udise.models.UserDataModel;
 import in.hulum.udise.utils.NotificationHelper;
 import in.hulum.udise.utils.SchoolReportsConstants;
 
 /**
  * Created by Irshad on 20-03-2018.
+ * This class contains methods for importing excel file into SQLite database,
+ * determining user type and determining whether the database is empty or not.
+ * All these methods are invoked through {@link ImportJobIntentService} only
+ * in order to execute this code on a background thread.
+ *
+ * <p>
+ * So these methods should be called only through the corresponding
+ * startAction methods in the {@link android.support.v4.app.JobIntentService}
+ * </p>
+ *
  */
 
 public class ImportUdiseData {
-    public static final String ACTION_FOO = "in.hulum.udise.action.FOO";
-    public static final String ACTION_BAZ = "in.hulum.udise.action.BAZ";
+
     public static final String ACTION_IMPORT_RAW_DATA = "in.hulum.udise.action.IMPORT_RAW_DATA";
-    public static final String ACTION_DOES_RAW_DATA_EXISTS_IN_DATABASE = "in.hulum.udise.action.DOES_RAW_DATA_EXIST_IN_DATABASE";
+    public static final String ACTION_DOES_RAW_DATA_EXIST_IN_DATABASE = "in.hulum.udise.action.DOES_RAW_DATA_EXIST_IN_DATABASE";
     public static final String ACTION_DETERMINE_USER_TYPE = "in.hulum.udise.action.DETERMINE_USER_TYPE";
 
     public static final String PARAM_DOES_RAW_DATA_EXIST = "in.hulum.udise.extra.PARAM_DOES_RAW_DATA_EXIST";
-    public static final String EXTRA_PARAM1 = "in.hulum.udise.extra.PARAM1";
-    public static final String EXTRA_PARAM2 = "in.hulum.udise.extra.PARAM2";
 
     public static final String PARAM_ERROR = "in.hulum.udise.extra.PARAM_ERROR";
     public static final String PARAM_MESSAGE = "in.hulum.udise.extra.PARAM_ERROR_MESSAGE";
@@ -80,23 +81,14 @@ public class ImportUdiseData {
     public static void executeAction(Context context, Intent intent){
         if (intent != null) {
             final String action = intent.getAction();
-            if (ACTION_FOO.equals(action)) {
-                final String param1 = intent.getStringExtra(ImportUdiseData.EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(ImportUdiseData.EXTRA_PARAM2);
-                handleActionFoo(context,param1, param2);
-            } else if (ACTION_BAZ.equals(action)) {
-                final String param1 = intent.getStringExtra(ImportUdiseData.EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(ImportUdiseData.EXTRA_PARAM2);
-                handleActionBaz(context,param1, param2);
-            }
-            else if(ACTION_IMPORT_RAW_DATA.equals(action)){
-                //final String uriString = intent.getStringExtra(ImportData.EXTRA_PARAM_URI);
-                //final Uri importFileUri = Uri.parse(uriString);
+
+            if(ACTION_IMPORT_RAW_DATA.equals(action)){
+
                 final Uri importFileUri = intent.getData();
                 handleActionImportRawData(context,importFileUri);
             }
 
-            else if(ACTION_DOES_RAW_DATA_EXISTS_IN_DATABASE.equals(action)){
+            else if(ACTION_DOES_RAW_DATA_EXIST_IN_DATABASE.equals(action)){
                 handleActionDoesRawDataExistInDatabase(context);
             }
 
@@ -108,7 +100,7 @@ public class ImportUdiseData {
 
     /**
      * This method determines the usertype on a background thread and stores
-     * it in the preferences so that main activity can read it and show the
+     * it in the shared preferences so that main activity can read it and show the
      * user type in the navigation drawer
      * @param context
      */
@@ -116,9 +108,26 @@ public class ImportUdiseData {
     private static void handleActionDetermineUserType(Context context){
         String userTypeString = "Unknown User";
         String userTypeSubtitle = "Unknown Office";
+        /*
+         * Create a new instance of UdiseDbHelper
+         * This is required because the determineUserTypeAndDataModel method
+         * that is used to determine the type of data and user is not static.
+         */
         UdiseDbHelper udiseDbHelper = new UdiseDbHelper(context);
+
+        /*
+         * Create a new instance of UserDataModel
+         * to hold the userType and and other data
+         * returned by the determineUserTypeAndDataModel method of
+         * UdiseDbHelper class
+         */
         UserDataModel userDataModel;
         userDataModel = udiseDbHelper.determineUserTypeAndDataModel(context);
+
+        /**
+         * Generate an appropriate title and subtitle for Navigation Drawer
+         * of the {@link MainActivity} based on the user type.
+         */
         switch(userDataModel.getUserType()){
             case UserDataModel.USER_TYPE_NATIONAL:
                 userTypeString = "National User";
@@ -139,6 +148,10 @@ public class ImportUdiseData {
                 userTypeSubtitle = "Zone Code: " + userDataModel.getZoneList().get(0).getZoneCode();
                 break;
         }
+
+        /*
+         * Save the title and subtitle in the shared preferences for later retrieval
+         */
         SharedPreferences mPreferences;
         String sharedPrefFile = SchoolReportsConstants.SHARED_PREFERENCES_FILE;
         mPreferences = context.getSharedPreferences(sharedPrefFile,Context.MODE_PRIVATE);
@@ -146,10 +159,13 @@ public class ImportUdiseData {
         preferenceEditor.putString(SchoolReportsConstants.SHARED_PREFERENCES_NAVIGATION_DRAWER_USER_TYPE_STRING,userTypeString);
         preferenceEditor.putString(SchoolReportsConstants.SHARED_PREFERENCES_NAVIGATION_DRAWER_SUBTITLE,userTypeSubtitle);
         preferenceEditor.apply();
+        /*
+         * Send a local broadcast confirming that the user type  has been determined
+         * and saved in the shared preferences
+         */
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(ACTION_DETERMINE_USER_TYPE);
         LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
-        Log.d(TAG,"Received request to determine userType, sending broadcast....");
     }
 
 
@@ -168,92 +184,12 @@ public class ImportUdiseData {
         UdiseDbHelper udiseDbHelper = new UdiseDbHelper(context);
         boolean result = udiseDbHelper.doesRawDataExistInDatabase(context);
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(ACTION_DOES_RAW_DATA_EXISTS_IN_DATABASE);
+        broadcastIntent.setAction(ACTION_DOES_RAW_DATA_EXIST_IN_DATABASE);
         broadcastIntent.putExtra(PARAM_DOES_RAW_DATA_EXIST,result);
         LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
-        Log.d(TAG,"Broadcast sent");
     }
 
-    /**
-     * Handle action Foo in the provided background thread with the provided
-     * parameters.
-     *
-     */
-    private static void handleActionFoo(Context context,String param1, String param2) {
-        Log.d(TAG,"*****************************************************");
-        UdiseDbHelper udiseDbHelper = new UdiseDbHelper(context);
-        Log.d(TAG,"*****************************************************");
-        UserDataModel userDataModel;
-        Log.d(TAG,"*****************************************************");
-        userDataModel = udiseDbHelper.determineUserTypeAndDataModel(context);
-        Log.d(TAG,"*****************************************************");
-        Log.d(TAG,"Dcode " + userDataModel.getDistrictsList().get(0).getDistrictCode() + " Dname " + userDataModel.getDistrictsList().get(0).getDistrictName());
-        Log.d(TAG,"User Type " + userDataModel.getUserType());
 
-        List<NumberOfSchoolsModel> numberOfSchoolsModelListSummary = new ArrayList<NumberOfSchoolsModel>();
-
-        switch (userDataModel.getUserType()){
-            case UserDataModel.USER_TYPE_DISTRICT:
-                numberOfSchoolsModelListSummary =
-                        udiseDbHelper.zonewiseNumberOfSchools(
-                                context,
-                                userDataModel.getDistrictsList().get(0).getDistrictCode(),
-                                userDataModel.getDistrictsList().get(0).getDistrictName(),
-                                userDataModel.getAcademicYearsList().get(0).getAc_year()
-                                //TODO: Academic year should be passed by user choice
-                        );
-                Log.d(TAG,"Dcode " + userDataModel.getDistrictsList().get(0).getDistrictCode() + " Dname " + userDataModel.getDistrictsList().get(0).getDistrictName());
-
-                break;
-
-        }
-
-        String message = "";
-        String temporary;
-        message = "DISTRICT SUMMARY\n" + "Total Primary Schools: " + numberOfSchoolsModelListSummary.get(0).getTotalPrimarySchools() + "\n" +
-                "Total Middle Schools: " + numberOfSchoolsModelListSummary.get(0).getTotalMiddleSchools() + "\n" +
-                "Total High Schools: " + numberOfSchoolsModelListSummary.get(0).getTotalHighSchools() + "\n" +
-                "Total Higher Secondary Schools: " + numberOfSchoolsModelListSummary.get(0).getTotalHigherSecondarySchools() + "\n";
-        int listItems = numberOfSchoolsModelListSummary.size();
-        int length = numberOfSchoolsModelListSummary.get(0).getManagementList().size();
-        Log.d(TAG, "Length is " + length + " and total items " + listItems);
-        for(int k=0;k<numberOfSchoolsModelListSummary.get(0).getManagementList().size();k++){
-            temporary = numberOfSchoolsModelListSummary.get(0).getManagementList().get(k).getManagementName();
-            message = message + temporary + "\n";
-            temporary = "Primary Schools : " + numberOfSchoolsModelListSummary.get(0).getManagementList().get(k).getPrimarySchools() + "\n";
-            message = message + temporary;
-            temporary = "Middle Schools : " + numberOfSchoolsModelListSummary.get(0).getManagementList().get(k).getMiddleSchools() + "\n";
-            message = message + temporary;
-            temporary = "High Schools : " + numberOfSchoolsModelListSummary.get(0).getManagementList().get(k).getHighSchools() + "\n";
-            message = message + temporary;
-            temporary = "Higher Secondary Schools : " + numberOfSchoolsModelListSummary.get(0).getManagementList().get(k).getHigherSecondarySchools() + "\n";
-            message = message + temporary;
-            Log.d(TAG,"Message " + message);
-            Log.d(TAG,"Temp " + temporary);
-        }
-
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(ACTION_FOO);
-        broadcastIntent.putExtra("message",message);
-        LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
-
-
-        /*
-        for(int i=0;i<=100;i++){
-            broadcastIntent.putExtra("percentage",i);
-            LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
-            SystemClock.sleep(100);
-            Log.d(TAG,"Loop is running i value is " + i);
-        }*/
-    }
-
-    /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
-     */
-    private static void handleActionBaz(Context context, String param1, String param2) {
-        Log.d(TAG,"This is action Baz using Stop!! Button. Parameters are " + param1 +" and " + param2);
-    }
 
 
     /**
@@ -300,24 +236,21 @@ public class ImportUdiseData {
 
         try {
             workbook = WorkbookFactory.create(context.getContentResolver().openInputStream(uriExcelFile));
-            int sheets = 0 ;
             Sheet firstSheet = null;
 
             if(workbook!=null){
-                sheets = workbook.getNumberOfSheets();
-
                 /* Read the first worksheet from the excel file */
                 firstSheet = workbook.getSheetAt(0);
             }
 
 
 
-
             int firstRowNum,lastRowNum,firstColNum,lastColNum;
-            DataFormatter dataFormatter = new DataFormatter();
-            String rowString;
+
             firstRowNum = firstSheet.getFirstRowNum();
             lastRowNum = firstSheet.getLastRowNum();
+
+            DataFormatter dataFormatter = new DataFormatter();
 
             /*
               If it is an empty file, return
@@ -327,7 +260,9 @@ public class ImportUdiseData {
                 notificationBuilder = notificationHelper.getNotificationWithAlerts(notificationTitle,"The imported excel file does not contain any data. Please choose a valid file.");
                 notificationHelper.getManager().notify(NOTIFICATION_ID,notificationBuilder.build());
                 Log.e(TAG,"Imported excel file contains less than two rows");
-                workbook.close();
+                if (workbook != null) {
+                    workbook.close();
+                }
                 return;
             }
 
@@ -347,30 +282,32 @@ public class ImportUdiseData {
                 notificationBuilder = notificationHelper.getNotificationWithAlerts(notificationTitle,"The imported excel file does not contain valid UDISE data. Please choose another file containing valid UDISE data.");
                 notificationHelper.getManager().notify(NOTIFICATION_ID,notificationBuilder.build());
                 Log.e(TAG,"Imported excel file contains only " + lastColNum + " columns which is lesser than standard " + excelHeaders.length + " columns.");
-                workbook.close();
+                if (workbook != null) {
+                    workbook.close();
+                }
                 return;
             }
-            Log.d(TAG,"Total columns found: " + excelHeaders.length);
-            /**
+
+            /*
              * Send a broadcast that the imported file is being analysed for a valid data format
              */
             sendProgressBroadcast(context,ACTION_IMPORT_RAW_DATA,false,true,false,false,"Analyzing headers, please wait...",0,UserDataModel.USER_TYPE_UNKNOWN);
-            Log.i(TAG,"Analysing headers...");
 
 
-            /**
+            /*
              * Check if all the headers present in the string array 'excelHeader' are also present in the excel file
              */
-            Log.d(TAG,"First column  " + firstColNum + "  and last column num is " + lastColNum);
             for(int i=firstColNum;i<excelHeaders.length;i++){
                 Cell cell = firstRow.getCell(i);
                 String cellString = dataFormatter.formatCellValue(cell);
                 if(!excelHeaders[i].equals(cellString)){
                     sendProgressBroadcast(context,ACTION_IMPORT_RAW_DATA,true,false,false,false,"The imported excel file does not contain UDISE data in a valid format. Please export the raw data to excel with headers and then save the file as xls file using MS-Excel software",0,UserDataModel.USER_TYPE_UNKNOWN);
-                    Log.e(TAG,"Imported excel file contains unknown header labels on iteration " + i);
+                    Log.e(TAG,"Imported excel file contains unknown header label " + excelHeaders[i] + " instead of expected label " + cellString + " at position " + i);
                     notificationBuilder = notificationHelper.getNotificationWithAlerts(notificationTitle,"The imported excel file does not contain UDISE data in a valid format. Please export the raw data to excel with headers and then save the file as xls file using MS-Excel software");
                     notificationHelper.getManager().notify(NOTIFICATION_ID,notificationBuilder.build());
-                    workbook.close();
+                    if (workbook != null) {
+                        workbook.close();
+                    }
                     return;
                 }
             }
@@ -421,7 +358,6 @@ public class ImportUdiseData {
                     if(cellString.length()!=0){
                         if(colIndex==0){
                             acYearsSet.add(cellString);
-                            Log.d(TAG,"Academic year [" + cellString + "] with length " + cellString.length() + " added to the list");
                         }
                         else if(colIndex==1){
                             stateNamesSet.add(cellString);
@@ -440,11 +376,7 @@ public class ImportUdiseData {
                 percentageCompleted = (rowIndex*100/lastRowNum);
                 String progressMessage = "Analysing imported file, " + percentageCompleted+ " % complete ...";
                 sendProgressBroadcast(context,ACTION_IMPORT_RAW_DATA,false,true,false,false,progressMessage,percentageCompleted,UserDataModel.USER_TYPE_UNKNOWN);
-                //Log.d(TAG,"Analysing imported file, " + percentageCompleted+ " % complete ...");
             }
-
-            Log.d(TAG,"First Row " + firstRowNum + " and Last Row " + lastRowNum);
-            Log.d(TAG,"First Column " + firstColNum + " and Last Row " + excelHeaders.length);
 
 
             acYears = acYearsSet.toArray(new String[acYearsSet.size()]);
@@ -490,16 +422,8 @@ public class ImportUdiseData {
             }
 
             //TODO: Clean-up this broadcast
-            String analysisMessage = "Analysis Complete \n" +
-                    "Number of Academic Years " + numberOfAcademicYears + "\n" +
-                    "Number of States " + numberOfStates +  "\n" +
-                    "Number of Districts " + numberOfDistricts +  "\n" +
-                    "Number of Zones " + numberOfZones +  "\n" +
-                    "Number of Schools " + numberOfSchools +  "\n" +
-                    "User Type " + userType;
+            String analysisMessage = "Analysis Complete";
             sendProgressBroadcast(context,ACTION_IMPORT_RAW_DATA,false,false,false,true,analysisMessage,100,userType);
-
-            Log.d(TAG,analysisMessage);
 
             /*
              * Check if it is an invalid excel file containing only headers
@@ -508,6 +432,10 @@ public class ImportUdiseData {
                 sendProgressBroadcast(context,ACTION_IMPORT_RAW_DATA,true,false,false,false,"Selected Excel file does not contain valid UDISE data. Please choose a valid file.",100,userType);
                 notificationBuilder = notificationHelper.getNotificationWithAlerts(notificationTitle,"The imported excel file does not contain valid UDISE data. Please choose a valid file.");
                 notificationHelper.getManager().notify(NOTIFICATION_ID,notificationBuilder.build());
+                if (workbook != null) {
+                    workbook.close();
+                }
+                return;
             }
 
 
@@ -551,7 +479,6 @@ public class ImportUdiseData {
                  */
                 Uri returnedUri;
                 returnedUri = context.getContentResolver().insert(UdiseContract.RawData.CONTENT_URI,contentValuesForInsertion);
-                Log.d(TAG,"Index: " + rowIndex + " Returned Uri is " + returnedUri);
                 /*
                  * Clear values from ArrayList and Content Values variables
                  */
@@ -577,7 +504,9 @@ public class ImportUdiseData {
             /*
              * Close the workbook to prevent memory leaks!
              */
-            workbook.close();
+            if (workbook != null) {
+                workbook.close();
+            }
 
             /*
              * Send final broadcast to mark the successful end of import process

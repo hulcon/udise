@@ -11,13 +11,13 @@ import in.hulum.udise.R;
 
 /**
  * Created by Irshad on 18-03-2018.
+ * This fragment is displayed in the viewpager of {@link in.hulum.udise.MainActivity}
  */
 
 public class EnrolmentReportsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.enrolment_reports_main,container,false);
-        return rootView;
+        return inflater.inflate(R.layout.enrolment_reports_main,container,false);
     }
 }

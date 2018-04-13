@@ -8,8 +8,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -17,17 +16,16 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.ViewPager;
-import android.util.Log;
-import android.view.View;
-import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,7 +46,6 @@ public class MainActivity extends AppCompatActivity
     private int clickedButtonId;
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    static final int REQUEST_CODE_IMPORT_FILE_PICKER_ACTIVITY_FOR_RESULT = 7;
 
     private SharedPreferences mPreferences;
     private String sharedPrefFile = SchoolReportsConstants.SHARED_PREFERENCES_FILE;
@@ -59,13 +56,13 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+        ViewPager viewPager = findViewById(R.id.viewpager);
         setupViewPager(viewPager);
 
-        TabLayout tabs = (TabLayout) findViewById(R.id.tab_layout);
+        TabLayout tabs = findViewById(R.id.tab_layout);
         tabs.setupWithViewPager(viewPager);
 
         /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -77,7 +74,7 @@ public class MainActivity extends AppCompatActivity
             }
         });*/
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
@@ -85,21 +82,21 @@ public class MainActivity extends AppCompatActivity
 
 
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         /*
          * Determine the user type on background thread so that appropriate
-         * title and subtitle can be set on the navigation drawer
+         * title and subtitle can be set on the navigation drawer.
+         * But do it only the first time the activity is created, not
+         * every time the device is rotated. onCreate method is called
+         * every time the device is rotated. In order to overcome this
+         * we use the bundle savedInstanceState to determine if this is
+         * the first time onCreate is being called.
          */
-        ImportJobIntentService.startActionDetermineUserType(this);
-
-        /*ActionBar supportActionBar = getSupportActionBar();
-        if(supportActionBar != null){
-            VectorDrawableCompat indicator = VectorDrawableCompat.create(getResources(),R.drawable.ic_menu_camera,getTheme());
-            supportActionBar.setHomeAsUpIndicator(indicator);
-            supportActionBar.setDisplayHomeAsUpEnabled(true);
-        }*/
+        if(savedInstanceState == null){
+            ImportJobIntentService.startActionDetermineUserType(this);
+        }
     }
 
 
@@ -121,12 +118,24 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(TAG,"Receiver in main activity fired!!!!");
-            if(intent.getAction().equals(ImportUdiseData.ACTION_DOES_RAW_DATA_EXISTS_IN_DATABASE)){
-                Log.d(TAG,"Broadcast Received");
+
+
+            if(ImportUdiseData.ACTION_DOES_RAW_DATA_EXIST_IN_DATABASE.equals(intent.getAction())){
+                /*
+                 * This broadcast is received when a report button is pressed.
+                 * Before generating any report, we first check whether there
+                 * is any data in the database or it is empty.
+                 */
                 boolean rawDataExistsInDatabase = intent.getBooleanExtra(ImportUdiseData.PARAM_DOES_RAW_DATA_EXIST,false);
                 if(rawDataExistsInDatabase){
-
+                    /**
+                     * If the database contains data, check which button was pressed
+                     * to generate and display the corresponding report.
+                     * The value of the variable clickedButtonId is set in the
+                     * {@link MainActivity#schoolReportsClickHandler(View)} method.
+                     * Here we just compare the value of this variable against the
+                     * id of each button to determine which button was pressed.
+                     */
                     switch (clickedButtonId){
                         case R.id.button_number_of_schools:
                             Intent tempIntent = new Intent(MainActivity.this,NumberOfSchools.class);
@@ -134,25 +143,26 @@ public class MainActivity extends AppCompatActivity
                             break;
                     }
                 } else {
-                    Toast.makeText(getApplicationContext(),"Oops! No data found!!",Toast.LENGTH_SHORT).show();
+                    /*
+                     * This case is activated only if the database is empty.
+                     * If the database is empty, we display the import excel file
+                     * dialog.
+                     */
                     ImportDialogFragment importDialogFragment = new ImportDialogFragment();
                     importDialogFragment.setCancelable(false);
                     importDialogFragment.show(getSupportFragmentManager(),"Import Excel File");
-
-
                 }
             }
 
             else if(intent.getAction().equals(ImportUdiseData.ACTION_DETERMINE_USER_TYPE)){
                 /*
-                 * This broadcast is received either whan an excel file is imported
+                 * This broadcast is received either when an excel file is imported
                  * or this app is started. This broadcast means that the user type
                  * has been determined on the basis of data found in the database
                  * and the user type has been stored in shared preferences.
                  * We just need to read the shared preferences and update the
                  * title and subtitle of navigation drawer header
                  */
-                Log.d(TAG,"Broadcast for usertype received");
                 mPreferences = getSharedPreferences(sharedPrefFile,Context.MODE_PRIVATE);
                 String navigationDrawerUserTypeString = mPreferences.getString(SchoolReportsConstants.SHARED_PREFERENCES_NAVIGATION_DRAWER_USER_TYPE_STRING,"Unknown User");
                 String navigationDrawerSubtitle = mPreferences.getString(SchoolReportsConstants.SHARED_PREFERENCES_NAVIGATION_DRAWER_SUBTITLE,"Unknown Office");
@@ -161,7 +171,6 @@ public class MainActivity extends AppCompatActivity
                 textViewNavigationDrawerUserType.setText(navigationDrawerUserTypeString);
                 TextView textViewNavigationDrawerSubtitle = navigationView.getHeaderView(0).findViewById(R.id.textview_drawer_subtitle);
                 textViewNavigationDrawerSubtitle.setText(navigationDrawerSubtitle);
-                Toast.makeText(context,"Bcast: Navigation Drawer Updated",Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -170,19 +179,16 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        // Inflate the menu
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -193,43 +199,51 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG,"Onresume called");
         IntentFilter myFilter = new IntentFilter();
-        myFilter.addAction(ImportUdiseData.ACTION_DOES_RAW_DATA_EXISTS_IN_DATABASE);
+        myFilter.addAction(ImportUdiseData.ACTION_DOES_RAW_DATA_EXIST_IN_DATABASE);
         myFilter.addAction(ImportUdiseData.ACTION_DETERMINE_USER_TYPE);
         LocalBroadcastManager.getInstance(this).registerReceiver(responseReceiver,myFilter);
     }
 
+
     @Override
-    protected void onStop() {
+    protected void onPause() {
+        super.onPause();
         /*
          * Unregister the broadcast receiver. If this is omitted,
          * it will cause the broadcast receiver to register multiple
          * times resulting in firing of response multiple times to
          * a single broadcast.
          */
-        super.onStop();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(responseReceiver);
-        Log.d(TAG,"onStop called");
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        //LocalBroadcastManager.getInstance(this).unregisterReceiver(responseReceiver);
-        Log.d(TAG,"onPause called");
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
+        //TODO: Handle navigation view item clicks here.
         int id = item.getItemId();
 
         if (id == R.id.nav_import_raw_data) {
-            Log.d(TAG,"Import item in drawer clicked");
+            /*
+             * Display import dialog for importing excel file.
+             * The dialog is displayed even if the SQLite database
+             * already contains data.
+             */
             ImportDialogFragment importDialogFragment = new ImportDialogFragment();
             importDialogFragment.setCancelable(false);
+            /*
+             * Set a custom message to be displayed on the dialog fragment.
+             * Since Google recommends to pass arguments to fragments through bundles
+             * instead of custom constructors, we are using the recommended mechanism
+             * to pass the custom message to the dialog fragment through the bundle.
+             */
+            Bundle args = new Bundle();
+            args.putString(ImportDialogFragment.KEY_DIALOG_FRAGMENT_MESSAGE,"Please choose the School Raw Data Excel File to import");
+            importDialogFragment.setArguments(args);
+            /*
+             * Show the actual dialog fragment
+             */
             importDialogFragment.show(getSupportFragmentManager(),"Import Excel File");
 
         } else if (id == R.id.nav_import_teacher_data) {
@@ -244,13 +258,21 @@ public class MainActivity extends AppCompatActivity
 
         }
 
+        /*
+         * Close the navigation drawer automatically if any menu item is clicked
+         */
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
 
-
+    /*
+     * This method sets up the viewpager.
+     * We simply add all of our fragments that we want
+     * to appear in the viewpager of this activity.
+     * Currently, there are only three fragments
+     */
     private void setupViewPager(ViewPager viewPager){
         Adapter adapter = new Adapter(getSupportFragmentManager());
         adapter.addFragment(new SchoolReportsFragment(),"School");
@@ -260,19 +282,29 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /**
+     * This method is the onClick handler of School Reports Layout
+     * This method handles clicks on the buttons of school reports fragment.
+     * It simply starts the background action "Does Raw Data Exist in Database"
+     * and stores the id of the clicked button in the clickedButtonId variable.
+     * Rest is handled by the {@link ResponseReceiver#onReceive(Context, Intent)}
+     * nested class method. The actual code for launching appropriate action
+     * corresponding to the button clicked is launched  from the broadcast receiver
+     * {@link ResponseReceiver#onReceive(Context, Intent)}. If the database is empty,
+     * the broadcast receiver displays an import dialog instead of the report.
+     * @param view the view that was clicked
+     */
+
     public void schoolReportsClickHandler(View view) {
         ImportJobIntentService.startActionDoesRawDataExistInDatabase(this);
         clickedButtonId = view.getId();
-        Log.d(TAG,"Button Clicked!!!");
-        /*switch(view.getId()){
-            case R.id.button_number_of_schools:
-
-        }*/
-
-        //buttonNumberOfSchools = (Button) findViewById(R.id.button_number_of_schools);
-        //buttonNumberOfSchools.setEnabled(false);
     }
 
+
+    /*
+     * This adapter class is a fragment pager adapter and
+     * is used to manage the fragments.
+     */
     static class Adapter extends FragmentPagerAdapter {
         private final List<Fragment> mFragmentList = new ArrayList<>();
         private final List<String> mFragmentTitleList = new ArrayList<>();
@@ -302,7 +334,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private boolean checkPermission() {
+   /* private boolean checkPermission() {
         int result = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE);
 
         return result == PackageManager.PERMISSION_GRANTED;
@@ -312,6 +344,6 @@ public class MainActivity extends AppCompatActivity
 
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_READ_EXTERNAL_STORAGE_REQUEST_CODE);
 
-    }
+    }*/
 
 }
