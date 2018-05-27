@@ -384,6 +384,13 @@ public class NumberOfSchools extends AppCompatActivity implements
         String name = args.getString(SchoolReportsConstants.EXTRA_KEY_NAME_STATE_DISTRICT_ZONE_CLUSTER);
         String parentCode = args.getString(SchoolReportsConstants.EXTRA_KEY_PARENT_STATE_DISTRICT_OR_ZONE_CODE);
 
+        /*
+         * Sort the rows on the basis of school management
+         * This way, Department of Education will be the
+         * first management in the list
+         */
+        String sortOrderColumnName = UdiseContract.RawData.COLUMN_SCHOOL_MANAGEMENT;
+
 
         switch (id){
             case ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_NATIONAL_SUMMARY_LOADER:
@@ -398,7 +405,8 @@ public class NumberOfSchools extends AppCompatActivity implements
                 String selectionStringNational = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsNational = {acYear};
-                return new CursorLoader(this,udiseSchoolsNationalUri,projectionNational,selectionStringNational,selectionArgumentsNational,null);
+
+                return new CursorLoader(this,udiseSchoolsNationalUri,projectionNational,selectionStringNational,selectionArgumentsNational,sortOrderColumnName);
 
             case ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_STATE_SUMMARY_LOADER:
                 Uri udiseSchoolsStateUri = UdiseContract.RawData.CONTENT_URI;
@@ -412,7 +420,8 @@ public class NumberOfSchools extends AppCompatActivity implements
                 String selectionStringState = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_STATE_NAME + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsState = {name, acYear};
-                return new CursorLoader(this,udiseSchoolsStateUri,projectionState,selectionStringState,selectionArgumentsState,null);
+
+                return new CursorLoader(this,udiseSchoolsStateUri,projectionState,selectionStringState,selectionArgumentsState,sortOrderColumnName);
 
 
             case ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_DISTRICT_SUMMARY_LOADER:
@@ -427,7 +436,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                 String selectionStringDistrict = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_DISTRICT_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsDistrict = {code, acYear};
-                return new CursorLoader(this,udiseSchoolsDistrictUri,projectionDistrict,selectionStringDistrict,selectionArgumentsDistrict,null);
+                return new CursorLoader(this,udiseSchoolsDistrictUri,projectionDistrict,selectionStringDistrict,selectionArgumentsDistrict,sortOrderColumnName);
 
             case ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_ZONE_SUMMARY_LOADER:
                 Uri udiseSchoolsZoneUri = UdiseContract.RawData.CONTENT_URI;
@@ -441,7 +450,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                 String selectionStringZone = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_ZONE_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsZone = {code, acYear};
-                return new CursorLoader(this,udiseSchoolsZoneUri,projectionZone,selectionStringZone,selectionArgumentsZone,null);
+                return new CursorLoader(this,udiseSchoolsZoneUri,projectionZone,selectionStringZone,selectionArgumentsZone,sortOrderColumnName);
 
             case ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_CLUSTER_SUMMARY_LOADER:
                 Uri udiseSchoolsClusterUri = UdiseContract.RawData.CONTENT_URI;
@@ -455,7 +464,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                 String selectionStringCluster = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_CLUSTER_CODE + " = ? and " + UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsCluster = {code, acYear};
-                return new CursorLoader(this,udiseSchoolsClusterUri,projectionCluster,selectionStringCluster,selectionArgumentsCluster,null);
+                return new CursorLoader(this,udiseSchoolsClusterUri,projectionCluster,selectionStringCluster,selectionArgumentsCluster,sortOrderColumnName);
 
             case ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_STATE_LOADER:
                 Uri udiseSchoolsAssemblyConstituencyForStateUri = UdiseContract.RawData.CONTENT_URI;
@@ -470,7 +479,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                 String selectionStringAssemblyConstituencyForState = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_STATE_NAME + " = ? and " + UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE + " = ? and "+ UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsAssemblyConstituencyForState = {parentCode, code, acYear};
-                return new CursorLoader(this,udiseSchoolsAssemblyConstituencyForStateUri,projectionAssemblyConstituencyForState,selectionStringAssemblyConstituencyForState,selectionArgumentsAssemblyConstituencyForState,null);
+                return new CursorLoader(this,udiseSchoolsAssemblyConstituencyForStateUri,projectionAssemblyConstituencyForState,selectionStringAssemblyConstituencyForState,selectionArgumentsAssemblyConstituencyForState,sortOrderColumnName);
 
             case ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_DISTRICT_LOADER:
                 Uri udiseSchoolsAssemblyConstituencyForDistrictUri = UdiseContract.RawData.CONTENT_URI;
@@ -485,7 +494,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                 String selectionStringAssemblyConstituencyForDistrict = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_DISTRICT_CODE + " = ? and " + UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE + " = ? and "+ UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsAssemblyConstituencyForDistrict = {parentCode, code, acYear};
-                return new CursorLoader(this,udiseSchoolsAssemblyConstituencyForDistrictUri,projectionAssemblyConstituencyForDistrict,selectionStringAssemblyConstituencyForDistrict,selectionArgumentsAssemblyConstituencyForDistrict,null);
+                return new CursorLoader(this,udiseSchoolsAssemblyConstituencyForDistrictUri,projectionAssemblyConstituencyForDistrict,selectionStringAssemblyConstituencyForDistrict,selectionArgumentsAssemblyConstituencyForDistrict,sortOrderColumnName);
 
             case ID_MANAGEMENT_WISE_NUMBER_OF_SCHOOLS_ASSEMBLY_CONSTITUENCY_SUMMARY_WITH_PARENT_ZONE_LOADER:
                 Uri udiseSchoolsAssemblyConstituencyForZoneUri = UdiseContract.RawData.CONTENT_URI;
@@ -500,7 +509,7 @@ public class NumberOfSchools extends AppCompatActivity implements
                 String selectionStringAssemblyConstituencyForZone = UdiseContract.RawData.COLUMN_SCHOOL_OPERATIONAL_STATUS + " = 0 and " + UdiseContract.RawData.COLUMN_ZONE_CODE + " = ? and " + UdiseContract.RawData.COLUMN_ASSEMBLY_CONSTITUENCY_CODE + " = ? and "+ UdiseContract.RawData.COLUMN_AC_YEAR + " = ?";
 
                 String[] selectionArgumentsAssemblyConstituencyForZone = {parentCode, code, acYear};
-                return new CursorLoader(this,udiseSchoolsAssemblyConstituencyForZoneUri,projectionAssemblyConstituencyForZone,selectionStringAssemblyConstituencyForZone,selectionArgumentsAssemblyConstituencyForZone,null);
+                return new CursorLoader(this,udiseSchoolsAssemblyConstituencyForZoneUri,projectionAssemblyConstituencyForZone,selectionStringAssemblyConstituencyForZone,selectionArgumentsAssemblyConstituencyForZone,sortOrderColumnName);
 
 
             default:
